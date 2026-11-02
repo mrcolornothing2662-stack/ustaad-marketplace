@@ -14,6 +14,7 @@ export const searchRepository = {
         services: { include: { service: true } },
         bookings: { select: { status: true } },
         availability: true,
+        leaves: true,
         badges: true,
         trustScore: true,
         reviews: {

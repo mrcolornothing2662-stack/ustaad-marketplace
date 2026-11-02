@@ -2052,6 +2052,371 @@
           }
         }
       }
+    },
+    "/account/preferences": {
+      "put": {
+        "summary": "Update user language and theme preferences",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "language": "pa",
+                "theme": "dark"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Preferences updated" }
+        }
+      }
+    },
+    "/account/profile-photo": {
+      "post": {
+        "summary": "Upload profile photo as Base64",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "mimeType": "image/jpeg",
+                "contentBase64": "/9j/4AAQSkZJRg..."
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Profile photo updated with secure URL" }
+        }
+      }
+    },
+    "/account/change-phone/request": {
+      "post": {
+        "summary": "Request SMS OTP to change mobile number",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "newPhone": "+919876543210"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "OTP sent to new mobile number" }
+        }
+      }
+    },
+    "/account/change-phone/confirm": {
+      "post": {
+        "summary": "Verify OTP and commit mobile number change",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "newPhone": "+919876543210",
+                "otp": "481923"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Phone number successfully updated" }
+        }
+      }
+    },
+    "/account/change-password": {
+      "put": {
+        "summary": "Change password and invalidate old sessions",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "currentPassword": "OldPassword123!",
+                "newPassword": "NewSecurePassword456!"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Password updated" }
+        }
+      }
+    },
+    "/account/favourites": {
+      "get": {
+        "summary": "List customer favourite workers",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Array of saved favourite workers" }
+        }
+      }
+    },
+    "/account/favourites/{providerId}": {
+      "post": {
+        "summary": "Add worker to favourites",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "providerId", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Provider added to favourites" }
+        }
+      },
+      "delete": {
+        "summary": "Remove worker from favourites",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "providerId", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Provider removed from favourites" }
+        }
+      }
+    },
+    "/providers/online-status": {
+      "put": {
+        "summary": "Worker toggles online/offline availability",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": { "isOnline": true }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Online availability updated" }
+        }
+      }
+    },
+    "/providers/leaves": {
+      "get": {
+        "summary": "List worker planned leaves",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "List of scheduled leaves" }
+        }
+      },
+      "post": {
+        "summary": "Schedule worker leave",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "startDate": "2026-11-10T00:00:00.000Z",
+                "endDate": "2026-11-12T23:59:59.000Z",
+                "reason": "Family function"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Leave scheduled" }
+        }
+      }
+    },
+    "/providers/dashboard": {
+      "get": {
+        "summary": "Worker dashboard metrics and profile completion percentage",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Dashboard statistics, ratings, completion rate, and earnings" }
+        }
+      }
+    },
+    "/providers/leads": {
+      "get": {
+        "summary": "Incoming booking requests matching worker's active services",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "List of active leads" }
+        }
+      }
+    },
+    "/bookings/{id}/reschedule": {
+      "post": {
+        "summary": "Propose new appointment date and time",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "proposedAt": "2026-11-06T15:00:00.000Z",
+                "reason": "Customer requested later time slot"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Reschedule proposal submitted" }
+        }
+      }
+    },
+    "/bookings/{id}/rebook": {
+      "post": {
+        "summary": "Rebook service with same worker at new date/time",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "preferredAt": "2026-11-15T11:00:00.000Z"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "New booking created" }
+        }
+      }
+    },
+    "/bookings/{bookingId}/payment": {
+      "get": {
+        "summary": "Get direct settlement payment record for booking",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "bookingId", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Payment status, agreed amount, zero platform fee confirmation" }
+        }
+      }
+    },
+    "/bookings/{bookingId}/payment/report": {
+      "post": {
+        "summary": "Customer reports direct payment (Cash or UPI)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "bookingId", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "paymentMethod": "UPI",
+                "amount": 550,
+                "transactionReference": "UPI/329482910492"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Payment reported awaiting worker confirmation" }
+        }
+      }
+    },
+    "/bookings/{bookingId}/payment/confirm": {
+      "post": {
+        "summary": "Worker confirms direct payment receipt (transitions to SETTLED)",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "bookingId", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "Payment confirmed and settled" }
+        }
+      }
+    },
+    "/bookings/{bookingId}/payment/dispute": {
+      "post": {
+        "summary": "Customer or worker disputes payment amount",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "bookingId", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "reason": "Amount received was less than agreed price"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Dispute logged" }
+        }
+      }
+    },
+    "/support/faqs": {
+      "get": {
+        "summary": "Public FAQs in English, Hindi, and Punjabi",
+        "security": [],
+        "parameters": [{ "name": "lang", "in": "query", "schema": { "type": "string", "enum": ["en", "hi", "pa"] } }],
+        "responses": {
+          "200": { "description": "List of localized FAQs" }
+        }
+      }
+    },
+    "/support/tickets": {
+      "get": {
+        "summary": "List user support tickets",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "User tickets" }
+        }
+      },
+      "post": {
+        "summary": "Open a new support ticket",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "category": "PAYMENT",
+                "subject": "Payment clarification",
+                "description": "Details regarding direct cash settlement"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Ticket opened" }
+        }
+      }
+    },
+    "/search/recent": {
+      "get": {
+        "summary": "Get customer recent search queries",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Array of recent searches" }
+        }
+      },
+      "delete": {
+        "summary": "Clear customer search history",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "History cleared" }
+        }
+      }
+    },
+    "/search/recently-viewed": {
+      "get": {
+        "summary": "Get recently viewed workers",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "List of recently viewed worker profiles" }
+        }
+      }
+    },
+    "/search/{id}/view": {
+      "post": {
+        "summary": "Log worker profile view",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }],
+        "responses": {
+          "200": { "description": "View recorded" }
+        }
+      }
     }
   },
   "components": {

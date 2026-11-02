@@ -22,15 +22,17 @@ export class AiServiceClient {
     const positiveWords = new Set([
       "great", "excellent", "good", "professional", "helpful", "fast", "recommend",
       "accha", "achha", "badhiya", "badiya", "shandar", "mast", "sahi", "behtar",
-      "अच्छा", "उत्कृष्ट", "बढ़िया", "शानदार", "कुशल", "संतुष्ट", "धन्यवाद"
+      "अच्छा", "उत्कृष्ट", "बढ़िया", "शानदार", "कुशल", "संतुष्ट", "धन्यवाद",
+      "ਵਧੀਆ", "ਚੰਗਾ", "ਸ਼ਾਨਦਾਰ", "ਕੁਸ਼ਲ", "ਸਮੇਂ", "ਧੰਨਵਾਦ", "vadiya", "vadia", "changa"
     ]);
     const negativeWords = new Set([
       "bad", "late", "poor", "rude", "broken", "awful", "avoid",
       "kharab", "bekar", "bakwas", "deri", "chor", "dhokha", "ghatiya",
-      "खराब", "देर", "घटिया", "बकवास", "बेकार", "गलत", "धोखा"
+      "खराब", "देर", "घटिया", "बकवास", "बेकार", "गलत", "धोखा",
+      "ਖਰਾਬ", "ਦੇਰ", "ਬੇਕਾਰ", "ਲੁੱਟ", "ਗਲਤ", "maada", "manda"
     ]);
 
-    const words = new Set(text.toLowerCase().replace(/[^a-zA-Z0-9\u0900-\u097F\s]/g, " ").split(/\s+/));
+    const words = new Set(text.toLowerCase().replace(/[^a-zA-Z0-9\u0900-\u0A7F\s]/g, " ").split(/\s+/));
     let posCount = 0;
     let negCount = 0;
 
@@ -46,13 +48,13 @@ export class AiServiceClient {
     return {
       label,
       score: Math.round(score * 100) / 100,
-      modelVersion: "local-fallback-v1",
+      modelVersion: "local-fallback-v2-trilingual",
     };
   }
 
   async analyzeSentiment(
     text: string,
-    language: "en" | "hi" = "en",
+    language: "en" | "hi" | "pa" = "en",
   ): Promise<SentimentResult> {
     for (let attempt = 1; attempt <= 2; attempt++) {
       try {

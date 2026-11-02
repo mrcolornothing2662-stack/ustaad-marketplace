@@ -1,5 +1,6 @@
 import { randomInt, randomUUID } from "node:crypto";
-import { mkdir, writeFile } from "node:fs/promises";
+import { z } from "zod";
+import { getStorageProvider } from "../../integrations/storage/storage.provider";
 import {
   bookingInput,
   transitionInput,
@@ -132,8 +133,7 @@ bookingRouter.post("/:id/transition", async (req, res, next) => {
       if (!valid) throw new AppError(400, "Invalid completion proof photo");
 
       const storageKey = randomUUID();
-      await mkdir("private-uploads", { recursive: true, mode: 0o700 });
-      await writeFile(`private-uploads/${storageKey}`, bytes, { mode: 0o600 });
+      await getStorageProvider().upload({ storageKey, buffer: bytes, mimeType: mime });
 
       const uploaded = await prisma.uploadedFile.create({
         data: {
@@ -366,8 +366,7 @@ bookingRouter.post("/:id/confirm-completion", authorize("CUSTOMER"), async (req,
       if (!valid) throw new AppError(400, "Invalid proof photo content");
 
       const storageKey = randomUUID();
-      await mkdir("private-uploads", { recursive: true, mode: 0o700 });
-      await writeFile(`private-uploads/${storageKey}`, bytes, { mode: 0o600 });
+      await getStorageProvider().upload({ storageKey, buffer: bytes, mimeType: mime });
 
       await prisma.uploadedFile.create({
         data: {
@@ -438,22 +437,132 @@ bookingRouter.post("/:id/confirm-completion", authorize("CUSTOMER"), async (req,
   }
 });
 
+bookingRouter.post("/:id/reschedule", async (req, res, next) => {
+  try {
+    const user = (req as AuthenticatedRequest).user!;
+    const booking = await bookingRepository.find(String(req.params.id));
+    if (!booking) throw new AppError(404, "Booking not found");
+
+    const owns =
+      booking.customer.userId === user.id ||
+      booking.provider.userId === user.id ||
+      user.role === "ADMIN";
+    if (!owns) throw new AppError(403, "Not your booking");
+
+    if (!["PENDING", "ACCEPTED", "CONFIRMED"].includes(booking.status)) {
+      throw new AppError(409, "Can only reschedule pending or confirmed appointments");
+    }
+
+    const { proposedAt, reason } = z
+      .object({
+        proposedAt: z.string().datetime(),
+        reason: z.string().max(500).optional(),
+      })
+      .parse(req.body);
+
+    const when = new Date(proposedAt);
+    if (when <= new Date()) {
+      throw new AppError(400, "Proposed time must be in the future");
+    }
+
+    const reschedule = await prisma.bookingReschedule.create({
+      data: {
+        bookingId: booking.id,
+        requestedById: user.id,
+        proposedAt: when,
+        reason: reason ?? null,
+      },
+    });
+
+    await prisma.booking.update({
+      where: { id: booking.id },
+      data: { proposedAt: when },
+    });
+
+    const otherUserId =
+      booking.customer.userId === user.id ? booking.provider.userId : booking.customer.userId;
+
+    await prisma.notification.create({
+      data: {
+        userId: otherUserId,
+        title: "Booking reschedule requested",
+        body: `A new appointment time was proposed for your booking.`,
+        type: "BOOKING_RESCHEDULED",
+        metadata: { bookingId: booking.id, proposedAt: when },
+      },
+    });
+
+    res.json(reschedule);
+  } catch (e) {
+    next(e);
+  }
+});
+
+bookingRouter.post("/:id/rebook", authorize("CUSTOMER"), async (req, res, next) => {
+  try {
+    const user = (req as AuthenticatedRequest).user!;
+    const previous = await bookingRepository.find(String(req.params.id));
+    if (!previous || previous.customer.userId !== user.id) {
+      throw new AppError(404, "Previous booking not found");
+    }
+
+    const { preferredAt } = z.object({ preferredAt: z.string().datetime() }).parse(req.body);
+
+    const newBooking = await bookingRepository.create(user.id, {
+      providerId: previous.providerId,
+      serviceId: previous.serviceId,
+      problemDescription: previous.problemDescription,
+      addressText: previous.addressText,
+      latitude: previous.latitude,
+      longitude: previous.longitude,
+      preferredAt,
+      estimatedDurationMinutes: previous.estimatedDurationMinutes,
+      bufferMinutes: previous.bufferMinutes,
+    });
+
+    res.status(201).json(newBooking);
+  } catch (e) {
+    next(e);
+  }
+});
+
 bookingRouter.get("/", async (req, res, next) => {
   try {
     const u = (req as AuthenticatedRequest).user!;
+    const category = req.query.category ? String(req.query.category).toLowerCase() : undefined;
+    let statusFilter: BookingStatus[] | undefined;
+
+    if (u.role === "CUSTOMER" && category) {
+      if (category === "upcoming") statusFilter = ["CONFIRMED", "PROVIDER_ON_THE_WAY"];
+      else if (category === "active") statusFilter = ["IN_PROGRESS", "AWAITING_CUSTOMER_CONFIRMATION"];
+      else if (category === "completed") statusFilter = ["COMPLETED", "REVIEWED"];
+      else if (category === "cancelled") statusFilter = ["CANCELLED_BY_CUSTOMER", "CANCELLED_BY_PROVIDER", "REJECTED", "NO_SHOW"];
+      else if (category === "disputed") statusFilter = ["DISPUTED"];
+    } else if (u.role === "PROVIDER" && category) {
+      if (category === "incoming") statusFilter = ["PENDING"];
+      else if (category === "accepted") statusFilter = ["ACCEPTED", "CONFIRMED"];
+      else if (category === "ongoing") statusFilter = ["PROVIDER_ON_THE_WAY", "IN_PROGRESS", "AWAITING_CUSTOMER_CONFIRMATION"];
+      else if (category === "completed") statusFilter = ["COMPLETED", "REVIEWED"];
+      else if (category === "cancelled") statusFilter = ["CANCELLED_BY_CUSTOMER", "CANCELLED_BY_PROVIDER", "REJECTED", "NO_SHOW"];
+      else if (category === "disputed") statusFilter = ["DISPUTED"];
+    }
+
     res.json(
       await prisma.booking.findMany({
-        where:
-          u.role === "CUSTOMER"
+        where: {
+          ...(u.role === "CUSTOMER"
             ? { customer: { userId: u.id } }
             : u.role === "PROVIDER"
               ? { provider: { userId: u.id } }
-              : {},
+              : {}),
+          ...(statusFilter ? { status: { in: statusFilter } } : {}),
+        },
         include: {
           service: true,
           customer: { include: { user: { select: { name: true } } } },
           provider: { include: { user: { select: { name: true } } } },
           review: true,
+          paymentRecord: true,
           files: {
             select: { id: true, category: true, mimeType: true, sizeBytes: true, createdAt: true },
           },

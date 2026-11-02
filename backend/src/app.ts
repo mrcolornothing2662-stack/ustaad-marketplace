@@ -19,6 +19,8 @@ import { reviewRouter } from "./modules/reviews/review.routes";
 import { chatRouter } from "./modules/chat/chat.routes";
 import { verificationRouter } from "./modules/verification/verification.routes";
 import { adminRouter } from "./modules/admin/admin.routes";
+import { paymentRouter } from "./modules/payments/payment.routes";
+import { supportRouter, adminSupportRouter } from "./modules/support/support.routes";
 import swaggerUi from "swagger-ui-express";
 import openApiDocument from "../docs/openapi.json";
 
@@ -49,9 +51,12 @@ export function createApp(probes?: readonly DependencyProbe[]): Express {
   api.use("/search", searchRouter);
   api.use("/bookings", bookingRouter);
   api.use("/bookings", photoRouter);
+  api.use("/bookings/:bookingId/payment", paymentRouter);
   api.use("/reviews", reviewRouter);
   api.use("/chat", chatRouter);
+  api.use("/support", supportRouter);
   api.use("/verification", verificationRouter);
+  api.use("/admin/support", adminSupportRouter);
   api.use("/admin", adminRouter);
   app.use("/api/v1", api);
   app.use(notFoundHandler);

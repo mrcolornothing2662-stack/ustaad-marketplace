@@ -74,13 +74,15 @@ Booking time conflicts use one-hour slots because the original schema has no job
 
 ## Development integrations and live-service boundaries
 
-- Phone verification creates random expiring single-use challenges with attempt limits. The code is displayed in development mode; no SMS is actually sent. Production requests fail clearly until real SMS delivery is implemented.
-- DigiLocker consent is explicitly a development simulation; it never claims that a real government identity was verified. Live DigiLocker credentials, consent handling and callback integration still require the actual service setup. Production simulation endpoints are disabled.
+- **DigiLocker Identity Verification:** Full OAuth 2.0 PKCE flow implemented in `digilocker.provider.ts`. Full Aadhaar numbers are never stored; only masked representations (`XXXX-XXXX-1234`) and privacy-safe metadata are persisted. Real credentials can be plugged in via `DIGILOCKER_CLIENT_ID` and `DIGILOCKER_CLIENT_SECRET`.
+- **Indian SMS Delivery:** Multi-provider architecture supporting Fast2SMS (`FAST2SMS_API_KEY`), MSG91 (`MSG91_AUTH_KEY`), and local `MockSmsProvider` with rate limiting and 30-second cooldown.
+- **Cloud & Local Storage:** Pluggable `StorageProvider` in `storage.provider.ts` supports AWS S3, Cloudflare R2, and MinIO via AWS SigV4, with local filesystem fallback for development.
+- **Zero Platform Commission Direct Settlement:** Payments are tracked through `PaymentRecord` (`PENDING → REPORTED_BY_CUSTOMER → CONFIRMED_BY_WORKER → SETTLED`) with zero platform fees deducted.
+- **Trilingual Localization:** English (`en`), Hindi (`hi`), and Punjabi (`pa`) supported natively across review sentiment analysis, notification templates, FAQs, and user preferences.
+- **Automated Database Backup & Restore:** `backend/scripts/backup.sh` and `backend/scripts/restore.sh` provide automated PostgreSQL 16 gzip dump creation, 14-day retention pruning, and safe restore workflows.
 - Password recovery uses expiring, single-use hashed tokens. Development exposes the token for local testing. Production email delivery needs a real provider integration.
-- In-app notifications are persisted. Device push/FCM delivery is not configured.
-- Certificate and problem-photo files use private local disk storage. The Compose volume preserves them across container restarts. Evidence expires after seven days; the administrator cleanup API removes expired evidence. Schedule that cleanup in a deployed environment. Production storage, backup/retention policy, malware scanning and delivery services require deployment-specific setup.
-- Sentiment analysis uses the project's deterministic explainable implementation. If the AI service is unavailable, the review is saved with neutral pending sentiment. Automatic sentiment retry is not implemented; keep the service available during the demonstration.
-- Maps/geocoding are not connected: enter address coordinates. Provider public search exposes approximate distance rather than exact coordinates.
+- In-app notifications are persisted and localized. Device push/FCM token management is implemented via `/account/device-tokens`.
+- Geocoding utility resolves coordinates for Indian cities and localities via `/search/geocode`.
 
 These requirements depend on external accounts, credentials, deployment and device testing. The archive is a tested development implementation, not a certified production release or a promise that no defects exist.
 

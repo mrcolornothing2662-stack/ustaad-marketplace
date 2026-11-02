@@ -1,11 +1,11 @@
 import { Router } from "express";
 import { z } from "zod";
 import { randomUUID } from "node:crypto";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { prisma } from "../../config/database";
 import { authenticate } from "../../common/middleware/authenticate";
 import type { AuthenticatedRequest } from "../../common/types/authenticated-request";
 import { AppError } from "../../common/errors/app-error";
+import { getStorageProvider } from "../../integrations/storage/storage.provider";
 
 export const photoRouter = Router();
 photoRouter.use(authenticate);
@@ -62,8 +62,7 @@ photoRouter.post("/:id/photos", async (req, res, next) => {
       throw new AppError(400, "Invalid image content or size exceeds 5 MB");
     }
     const storageKey = randomUUID();
-    await mkdir("private-uploads", { recursive: true, mode: 0o700 });
-    await writeFile(`private-uploads/${storageKey}`, bytes, { mode: 0o600 });
+    await getStorageProvider().upload({ storageKey, buffer: bytes, mimeType: d.mimeType });
     const f = await prisma.uploadedFile.create({
       data: {
         bookingId: b.id,
@@ -107,8 +106,7 @@ photoRouter.post("/:id/evidence", async (req, res, next) => {
       throw new AppError(400, "Invalid image content or size exceeds 5 MB");
     }
     const storageKey = randomUUID();
-    await mkdir("private-uploads", { recursive: true, mode: 0o700 });
-    await writeFile(`private-uploads/${storageKey}`, bytes, { mode: 0o600 });
+    await getStorageProvider().upload({ storageKey, buffer: bytes, mimeType: d.mimeType });
     const f = await prisma.uploadedFile.create({
       data: {
         bookingId: b.id,
@@ -148,9 +146,8 @@ photoRouter.get("/:id/photos/:photoId", async (req, res, next) => {
       },
     });
     if (!f) throw new AppError(404, "Photo not found");
-    res
-      .type(f.mimeType)
-      .send(await readFile(`private-uploads/${f.storageKey}`));
+    const bytes = await getStorageProvider().download(f.storageKey);
+    res.type(f.mimeType).send(bytes);
   } catch (e) {
     next(e);
   }

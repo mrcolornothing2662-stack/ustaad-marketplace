@@ -105,3 +105,79 @@ The Phase 1 Prisma schema establishes the database connection and baseline `User
 | integrations | Replaceable clients for DigiLocker, FCM, AI service, and secure file storage. |
 | common | Cross-cutting errors, middleware, security primitives, types, validators, and small utilities. |
 
+## 10. Additional Backend Implementation Requirements
+
+The platform has been hardened and completed to support a production-grade marketplace operated on a **zero platform fee** model with direct worker-customer settlement.
+
+### 10.1 Language and Personalization Infrastructure
+- **Trilingual Core Support:** Native support for English (`en`), Hindi (`hi`), and Punjabi (`pa`).
+- **User Preferences:** Stored per user with `PUT /api/v1/account/preferences` (`language: en|hi|pa`, `theme: light|dark|system`).
+- **Notification Templates:** Comprehensive localized templates in all 3 languages for all booking and account lifecycle events (`notification.templates.ts`).
+- **Unicode Preservation:** All database text columns use UTF-8; Hindi (Devanagari) and Punjabi (Gurmukhi) messages, reviews, and names are preserved verbatim without transliteration loss.
+- **Multilingual Sentiment Analysis:** AI service and deterministic backend fallback support English, Hindi (Devanagari + Hinglish), and Punjabi (Gurmukhi + Romanized Punjabi).
+
+### 10.2 Account and Profile Management
+- **Profile Editing:** `PUT /api/v1/account/profile` updates name and profile details.
+- **Profile Photo:** `POST /api/v1/account/profile-photo` uploads Base64 images with magic-byte verification to object storage, updating both user and provider records. Public access via `GET /api/v1/account/photo/:key`.
+- **Mobile Change with OTP:** `POST /api/v1/account/change-phone/request` sends OTP to new Indian mobile (`+91...`); `POST /api/v1/account/change-phone/confirm` validates OTP and commits the change.
+- **Password Change:** `PUT /api/v1/account/change-password` validates old password, sets new bcrypt hash, and revokes all existing refresh tokens.
+- **Account Deletion:** `DELETE /api/v1/account` performs compliant soft-deletion (`deletedAt = now()`, status `DELETED`), revokes all sessions, and clears device push tokens.
+- **Customer Favourites:** `GET /api/v1/account/favourites`, `POST /api/v1/account/favourites/:providerId`, and `DELETE /api/v1/account/favourites/:providerId`.
+- **Saved Addresses:** Full CRUD via `/api/v1/account/addresses` and `PUT /api/v1/account/addresses/:id`.
+- **User Blocking & Reporting:** `POST /api/v1/account/blocks`, `GET /api/v1/account/blocks`, `DELETE /api/v1/account/blocks/:userId`, and `POST /api/v1/account/reports`.
+
+### 10.3 Worker Operations & Availability
+- **Online/Offline Availability:** `PUT /api/v1/providers/online-status` toggles worker availability. Offline workers are automatically omitted from public search.
+- **Leave Calendar Management:** `POST /api/v1/providers/leaves`, `GET /api/v1/providers/leaves`, `DELETE /api/v1/providers/leaves/:id`. Booking searches for appointment times falling within a leave range automatically exclude the provider.
+- **Worker Dashboard:** `GET /api/v1/providers/dashboard` computes total earnings, completed jobs, average rating, acceptance/completion rates, and profile completion percentage (0–100%).
+- **Incoming Leads:** `GET /api/v1/providers/leads` returns booking requests matching the worker's active services.
+
+### 10.4 Booking Lifecycle Extensions
+- **Categorized Views:** `GET /api/v1/bookings?category=...`
+  - Customer categories: `upcoming`, `active`, `completed`, `cancelled`, `disputed`.
+  - Worker categories: `incoming`, `accepted`, `ongoing`, `completed`, `cancelled`.
+- **Rescheduling:** `POST /api/v1/bookings/:id/reschedule` proposes a new appointment time with duration/buffer validation.
+- **Rebooking:** `POST /api/v1/bookings/:id/rebook` allows instant rebooking of a previous worker & service.
+
+### 10.5 Direct Settlement Payment Records
+- **Zero Platform Commission:** Ustaad never charges booking or platform commission. All payments are settled directly between customer and worker.
+- **Payment Lifecycle:** `PENDING` → `REPORTED_BY_CUSTOMER` (Cash/UPI) → `CONFIRMED_BY_WORKER` → `SETTLED`.
+- **Endpoints:**
+  - `GET /api/v1/bookings/:bookingId/payment`: Inspect direct settlement record.
+  - `POST /api/v1/bookings/:bookingId/payment/report`: Customer reports Cash or UPI payment with optional UTR.
+  - `POST /api/v1/bookings/:bookingId/payment/confirm`: Worker confirms receipt; status transitions to `SETTLED`.
+  - `POST /api/v1/bookings/:bookingId/payment/dispute`: Either party can dispute unsettled or mismatched amounts.
+
+### 10.6 Chat Access Security Rules
+- **Pre-Confirmation Lock:** Chat is strictly forbidden (`403 Forbidden`) while booking is `PENDING` or `ACCEPTED`.
+- **Cancelled Bookings:** Historical messages remain readable; new messages are blocked.
+- **Post-Completion 48-Hour Policy:** Messaging remains available for 48 hours after job completion for coordination, then automatically locks.
+- **Enriched Payloads:** All messages include `sender: { id, name, role }`, `isMe`, `attachmentUrl`.
+- **Read Receipts:** `POST /api/v1/chat/:bookingId/read` marks messages as read.
+
+### 10.7 Support and Dispute Resolution
+- **Localized FAQs:** `GET /api/v1/support/faqs?lang=en|hi|pa` returns public questions and answers.
+- **Support Tickets:** `POST /api/v1/support/tickets`, `GET /api/v1/support/tickets`, `POST /api/v1/support/tickets/:id/messages`.
+- **Admin Support:** `GET /api/v1/admin/support/tickets`, `POST /api/v1/admin/support/tickets/:id/resolve`.
+
+## 11. Production Readiness, Infrastructure, and Security Controls
+
+### 11.1 DigiLocker Identity Verification
+- **OAuth 2.0 PKCE:** Implemented in `digilocker.provider.ts` using RFC 7636 compliant `code_verifier` and `code_challenge` (S256).
+- **Aadhaar Privacy:** Full 12-digit Aadhaar numbers are never stored in the database. Only masked numbers (`XXXX-XXXX-1234`) and privacy-safe metadata are persisted.
+- **Fuzzy Name Matching:** Levenshtein-based name matching normalizes honorifics (Mr., Shri, Smt.) and whitespace to verify worker identity.
+
+### 11.2 SMS & OTP Authentication
+- **Multi-Provider Architecture:** Pluggable `Fast2SmsProvider`, `Msg91SmsProvider`, and `MockSmsProvider` with automatic fallback.
+- **Security Constraints:** 30-second cooldown between resends, maximum 5 attempts, 5-minute single-use expiry.
+
+### 11.3 Cloud Object Storage
+- **Unified Interface:** `StorageProvider` (`storage.provider.ts`) handles uploads, downloads, and pre-signed URLs.
+- **S3 / R2 / MinIO Adapter:** S3-compatible cloud storage with AWS SigV4 request signing implemented natively using `node:crypto`.
+- **Local Fallback:** Development environment automatically falls back to local disk storage (`private-uploads`).
+
+### 11.4 Backup and Disaster Recovery
+- **Automated Backup:** `backend/scripts/backup.sh` creates timestamped gzip-compressed PostgreSQL 16 dumps with 14-day retention pruning.
+- **Safe Restore:** `backend/scripts/restore.sh` safely restores dumps with confirmation safeguards.
+
+

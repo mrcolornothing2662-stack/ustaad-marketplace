@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import { randomUUID } from "node:crypto";
-import { mkdir, writeFile } from "node:fs/promises";
+import { getStorageProvider } from "../../integrations/storage/storage.provider";
 import { prisma } from "../../config/database";
 import { authenticate } from "../../common/middleware/authenticate";
 import { authorize } from "../../common/middleware/authorize";
@@ -197,8 +197,7 @@ verificationRouter.post("/skill", async (req, res, next) => {
     if (!valid) throw new AppError(400, "File content does not match its type");
 
     const storageKey = randomUUID();
-    await mkdir("private-uploads", { recursive: true, mode: 0o700 });
-    await writeFile(`private-uploads/${storageKey}`, bytes, { mode: 0o600 });
+    await getStorageProvider().upload({ storageKey, buffer: bytes, mimeType: d.mimeType });
 
     res.status(201).json(
       await prisma.verificationRequest.create({

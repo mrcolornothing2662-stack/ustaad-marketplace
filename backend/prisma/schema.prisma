@@ -105,25 +105,83 @@ enum FileCategory {
 enum ReviewLanguage {
   EN
   HI
+  PA
+}
+
+enum UserLanguage {
+  EN
+  HI
+  PA
+}
+
+enum AppTheme {
+  LIGHT
+  DARK
+  SYSTEM
+}
+
+enum PaymentMethod {
+  CASH
+  UPI
+  OTHER
+}
+
+enum PaymentStatus {
+  PENDING
+  REPORTED_BY_CUSTOMER
+  CONFIRMED_BY_WORKER
+  SETTLED
+  DISPUTED
+  FAILED
+}
+
+enum TicketCategory {
+  BOOKING
+  PAYMENT
+  WORKER
+  CUSTOMER
+  ACCOUNT
+  OTHER
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
 }
 
 model User {
-  id              String           @id @default(uuid())
-  name            String
-  email           String           @unique
-  phone           String           @unique
-  passwordHash    String
-  role            UserRole
-  status          AccountStatus    @default(ACTIVE)
-  phoneVerifiedAt DateTime?
-  customerProfile CustomerProfile?
-  providerProfile ProviderProfile?
-  refreshTokens   RefreshToken[]
-  notifications   Notification[]
-  deviceTokens    DeviceToken[]
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  deletedAt       DateTime?
+  id                String           @id @default(uuid())
+  name              String
+  email             String           @unique
+  phone             String           @unique
+  passwordHash      String
+  role              UserRole
+  status            AccountStatus    @default(ACTIVE)
+  phoneVerifiedAt   DateTime?
+  preferredLanguage UserLanguage     @default(EN)
+  preferredTheme    AppTheme         @default(SYSTEM)
+  profilePhotoUrl   String?
+  customerProfile   CustomerProfile?
+  providerProfile   ProviderProfile?
+  refreshTokens     RefreshToken[]
+  notifications     Notification[]
+  deviceTokens      DeviceToken[]
+  supportTickets    SupportTicket[]
+  ticketMessages    TicketMessage[]
+  searchHistory     SearchHistory[]
+  recentlyViewed    RecentlyViewedWorker[]
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  deletedAt         DateTime?
 
   @@index([role, status])
 }
@@ -170,13 +228,14 @@ model Address {
 }
 
 model CustomerProfile {
-  id        String    @id @default(uuid())
-  userId    String    @unique
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  addresses Address[]
-  bookings  Booking[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id         String              @id @default(uuid())
+  userId     String              @unique
+  user       User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  addresses  Address[]
+  bookings   Booking[]
+  favourites CustomerFavourite[]
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
 }
 
 model ProviderProfile {
@@ -193,19 +252,24 @@ model ProviderProfile {
   longitude       Float?
   serviceRadiusKm Float                  @default(15)
   listingPaused   Boolean                @default(false)
+  isOnline        Boolean                @default(true)
   approvedAt      DateTime?
   services        ProviderService[]
   availability    ProviderAvailability[]
+  leaves          ProviderLeave[]
   verifications   VerificationRequest[]
   badges          ProviderBadge[]
   bookings        Booking[]
   reviews         Review[]
   trustScore      TrustScore?
   trustHistory    TrustScoreHistory[]
+  favouritedBy    CustomerFavourite[]
+  viewedBy        RecentlyViewedWorker[]
   createdAt       DateTime               @default(now())
   updatedAt       DateTime               @updatedAt
 
   @@index([approvedAt, listingPaused])
+  @@index([isOnline])
 }
 
 model ServiceCategory {
@@ -351,6 +415,9 @@ model Booking {
   review                 Review?
   complaints             Complaint[]
   files                  UploadedFile[]
+  paymentRecord          PaymentRecord?
+  reschedules            BookingReschedule[]
+  supportTickets         SupportTicket[]
   createdAt              DateTime               @default(now())
   updatedAt              DateTime               @updatedAt
 
@@ -509,10 +576,145 @@ model AuditLog {
 }
 
 model PasswordReset {
- id String @id @default(uuid())
- userId String
- tokenHash String @unique
- expiresAt DateTime
- usedAt DateTime?
- createdAt DateTime @default(now())
+  id        String   @id @default(uuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+}
+
+model CustomerFavourite {
+  id         String          @id @default(uuid())
+  customerId String
+  customer   CustomerProfile @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  providerId String
+  provider   ProviderProfile @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  createdAt  DateTime        @default(now())
+
+  @@unique([customerId, providerId])
+  @@index([customerId])
+}
+
+model ProviderLeave {
+  id         String          @id @default(uuid())
+  providerId String
+  provider   ProviderProfile @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  startDate  DateTime
+  endDate    DateTime
+  reason     String?
+  createdAt  DateTime        @default(now())
+
+  @@index([providerId, startDate, endDate])
+}
+
+model PaymentRecord {
+  id                   String        @id @default(uuid())
+  bookingId            String        @unique
+  booking              Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  agreedAmount         Decimal       @db.Decimal(10, 2)
+  paymentMethod        PaymentMethod @default(CASH)
+  paymentStatus        PaymentStatus @default(PENDING)
+  transactionReference String?
+  reportedByCustomerId String?
+  reportedAt           DateTime?
+  confirmedByWorkerId  String?
+  confirmedAt          DateTime?
+  settledAt            DateTime?
+  notes                String?
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+
+  @@index([paymentStatus])
+}
+
+model BookingReschedule {
+  id            String   @id @default(uuid())
+  bookingId     String
+  booking       Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  requestedById String
+  proposedAt    DateTime
+  reason        String?
+  status        String   @default("PENDING")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([bookingId])
+}
+
+model SearchHistory {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  query     String
+  serviceId String?
+  latitude  Float?
+  longitude Float?
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+}
+
+model RecentlyViewedWorker {
+  id         String          @id @default(uuid())
+  userId     String
+  user       User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  providerId String
+  provider   ProviderProfile @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  viewedAt   DateTime        @default(now())
+
+  @@unique([userId, providerId])
+  @@index([userId, viewedAt])
+}
+
+model SupportFaq {
+  id         String   @id @default(uuid())
+  category   String
+  questionEn String
+  questionHi String
+  questionPa String
+  answerEn   String
+  answerHi   String
+  answerPa   String
+  order      Int      @default(0)
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now())
+
+  @@index([category, active])
+}
+
+model SupportTicket {
+  id              String          @id @default(uuid())
+  ticketNumber    String          @unique
+  userId          String
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  bookingId       String?
+  booking         Booking?        @relation(fields: [bookingId], references: [id])
+  category        TicketCategory  @default(OTHER)
+  status          TicketStatus    @default(OPEN)
+  priority        TicketPriority  @default(MEDIUM)
+  subject         String
+  description     String
+  assignedAdminId String?
+  resolution      String?
+  messages        TicketMessage[]
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@index([userId, status])
+  @@index([status, priority])
+}
+
+model TicketMessage {
+  id            String        @id @default(uuid())
+  ticketId      String
+  ticket        SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  senderId      String
+  sender        User          @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  senderRole    UserRole
+  message       String
+  attachmentUrl String?
+  createdAt     DateTime      @default(now())
+
+  @@index([ticketId, createdAt])
 }

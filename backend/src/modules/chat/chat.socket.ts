@@ -28,13 +28,13 @@ export function configureChatSocket(server: Server): SocketServer {
   });
 
   io.on("connection", (socket) => {
-    async function authorize(bookingId: string) {
+    async function authorize(bookingId: string, action: "read" | "write" = "read") {
       const identity = verifyAccessToken(socket.data.token);
       const u = await prisma.user.findUnique({ where: { id: identity.id } });
       if (!u || u.deletedAt || ["SUSPENDED", "DELETED"].includes(u.status)) {
         throw Error("Account unavailable");
       }
-      await member(bookingId, u.id);
+      await member(bookingId, u.id, action);
       return u;
     }
 
@@ -43,7 +43,7 @@ export function configureChatSocket(server: Server): SocketServer {
       async (bookingId: string, done?: (ok: boolean) => void) => {
         try {
           z.string().uuid().parse(bookingId);
-          await authorize(bookingId);
+          await authorize(bookingId, "read");
           await socket.join(`booking:${bookingId}`);
           done?.(true);
         } catch {
@@ -62,7 +62,7 @@ export function configureChatSocket(server: Server): SocketServer {
           })
           .parse(input);
 
-        const u = await authorize(d.bookingId);
+        const u = await authorize(d.bookingId, "write");
         if (!socket.rooms.has(`booking:${d.bookingId}`)) return;
 
         const conversation = await prisma.chatConversation.upsert({
@@ -80,14 +80,13 @@ export function configureChatSocket(server: Server): SocketServer {
           },
         });
 
-        // Broadcast UI/UX rich payload with sender name and role
         io.to(`booking:${d.bookingId}`).emit("chat:message", {
           id: message.id,
           conversationId: message.conversationId,
           body: message.body,
           attachmentUrl: message.attachmentUrl,
           createdAt: message.createdAt,
-          senderId: u.id, // preserved for backward-compatibility
+          senderId: u.id,
           sender: {
             id: u.id,
             name: u.name,
@@ -95,10 +94,10 @@ export function configureChatSocket(server: Server): SocketServer {
           },
           bookingId: d.bookingId,
         });
-      } catch {
+      } catch (err: any) {
         socket.emit("chat:error", {
           message:
-            "Message could not be sent. Check booking and sign in again.",
+            err?.message || "Message could not be sent. Check booking status and sign in again.",
         });
       }
     });

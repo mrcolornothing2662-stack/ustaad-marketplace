@@ -29,12 +29,42 @@ class DeterministicSentimentAnalyzer:
         "lutera", "bura", "faltu", "adhura", "fraud", "laaparwah"
     }
 
+    # Punjabi terms (Gurmukhi script)
+    positive_pa_gur = {
+        "ਵਧੀਆ", "ਚੰਗਾ", "ਸ਼ਾਨਦਾਰ", "ਕੁਸ਼ਲ", "ਸਮੇਂ", "ਧੰਨਵਾਦ", "ਇਮਾਨਦਾਰ",
+        "ਮਿਹਨਤੀ", "ਸੰਤੁਸ਼ਟ", "ਉੱਤਮ"
+    }
+    negative_pa_gur = {
+        "ਖਰਾਬ", "ਦੇਰ", "ਬੇਕਾਰ", "ਲੁੱਟ", "ਗਲਤ", "ਧੋਖਾ", "ਗੰਦਾ", "ਚੋਰ", "ਅਧੂਰਾ", "ਮਾੜਾ"
+    }
+
+    # Romanized Punjabi terms
+    positive_pa_rom = {
+        "vadiya", "vadia", "changa", "changaa", "siraa", "shandar", "dhannwad",
+        "bahut changa", "imandar", "sirra", "sahi"
+    }
+    negative_pa_rom = {
+        "kharab", "bekar", "maada", "manda", "deri", "lutt", "thagg", "dhokha"
+    }
+
     def analyze(self, text: str, language: str = "en") -> dict[str, str | float]:
         cleaned = text.lower().replace(".", " ").replace(",", " ").replace("!", " ")
         words = set(cleaned.split())
 
-        all_positive = self.positive_en | self.positive_hi_dev | self.positive_hi_rom
-        all_negative = self.negative_en | self.negative_hi_dev | self.negative_hi_rom
+        all_positive = (
+            self.positive_en
+            | self.positive_hi_dev
+            | self.positive_hi_rom
+            | self.positive_pa_gur
+            | self.positive_pa_rom
+        )
+        all_negative = (
+            self.negative_en
+            | self.negative_hi_dev
+            | self.negative_hi_rom
+            | self.negative_pa_gur
+            | self.negative_pa_rom
+        )
 
         pos_matches = words & all_positive
         neg_matches = words & all_negative
@@ -48,5 +78,5 @@ class DeterministicSentimentAnalyzer:
             "label": label,
             "score": round(score, 2),
             "language": language,
-            "modelVersion": "deterministic-v2-bilingual",
+            "modelVersion": "deterministic-v3-trilingual",
         }
