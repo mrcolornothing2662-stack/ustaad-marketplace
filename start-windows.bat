@@ -83,6 +83,7 @@ echo Launch Complete! Opening Web Applications in your default browser...
 echo ======================================================================
 start http://localhost:3000/customer.html
 start http://localhost:3000/worker.html
+start http://localhost:3000/admin.html
 start http://localhost:4000/api-docs
 
 echo.
@@ -91,6 +92,7 @@ echo URLS & TEST CREDENTIALS:
 echo ======================================================================
 echo Customer Portal : http://localhost:3000/customer.html
 echo Worker Portal   : http://localhost:3000/worker.html
+echo Admin Dashboard : http://localhost:3000/admin.html
 echo Backend API Docs: http://localhost:4000/api-docs
 echo.
 echo Demo Worker: provider1@ustaad.local / UstaadDev123!

@@ -29,6 +29,7 @@ Once running, access the services in your browser:
 | :--- | :--- |
 | **Customer Web Application** | [http://localhost:3000/customer.html](http://localhost:3000/customer.html) |
 | **Worker Web Portal** | [http://localhost:3000/worker.html](http://localhost:3000/worker.html) |
+| **Admin Operations Dashboard** | [http://localhost:3000/admin.html](http://localhost:3000/admin.html) |
 | **Backend REST API & OpenAPI Docs** | [http://localhost:4000/api-docs](http://localhost:4000/api-docs) |
 | **AI Microservice Swagger Docs** | [http://localhost:8000/docs](http://localhost:8000/docs) |
 

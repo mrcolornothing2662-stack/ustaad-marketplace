@@ -2699,6 +2699,60 @@
       } catch (e) {}
     }
 
+    let notifsLoaded = [];
+    async function toggleNotifications() {
+      const panel = document.getElementById('notifPanel');
+      if (panel.style.display === 'none' || !panel.style.display) {
+        panel.style.display = 'block';
+        await loadNotifications();
+      } else {
+        panel.style.display = 'none';
+      }
+    }
+
+    async function loadNotifications() {
+      if (!currentUser) return;
+      try {
+        const notifs = await apiCall('/account/notifications');
+        notifsLoaded = notifs || [];
+        const unread = notifsLoaded.filter(n => !n.readAt).length;
+        const badge = document.getElementById('notifBadge');
+        if (unread > 0) {
+          badge.textContent = unread;
+          badge.style.display = 'inline-block';
+        } else {
+          badge.style.display = 'none';
+        }
+
+        const list = document.getElementById('notifList');
+        if (!notifsLoaded.length) {
+          list.innerHTML = '<div class="empty-state" style="padding:20px 0;"><span id="txt-no-notifs">No notifications yet</span></div>';
+          return;
+        }
+
+        list.innerHTML = notifsLoaded.map(n => `
+          <div style="background:${n.readAt ? 'var(--bg)' : 'var(--sage-100)'}; border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px; font-size:12px;">
+            <div style="font-weight:700; color:var(--text-main); margin-bottom:2px;">${n.title}</div>
+            <div style="color:var(--text-muted); line-height:1.4;">${n.body}</div>
+            <div style="font-size:10px; color:var(--text-muted); margin-top:4px; text-align:right;">${new Date(n.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+          </div>
+        `).join('');
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function markAllNotificationsRead() {
+      if (!currentUser || !notifsLoaded.length) return;
+      for (const n of notifsLoaded) {
+        if (!n.readAt) {
+          await apiCall(`/account/notifications/${n.id}/read`, 'POST').catch(() => {});
+        }
+      }
+      await loadNotifications();
+      showToast('All notifications marked as read', 'success');
+    }
+
     function confirmDeleteAccount() {
       if (confirm('Are you sure you want to delete your Ustaad account? All your personal sessions will be revoked.')) {
         apiCall('/account', 'DELETE').then(() => {

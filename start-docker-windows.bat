@@ -26,6 +26,7 @@ timeout /t 8 /nobreak >nul
 echo Opening apps in browser...
 start http://localhost:3000/customer.html
 start http://localhost:3000/worker.html
+start http://localhost:3000/admin.html
 start http://localhost:4000/api-docs
 
 echo.
@@ -34,6 +35,7 @@ echo USTAAD IS RUNNING IN DOCKER CONTAINERS!
 echo ======================================================================
 echo Customer Web App : http://localhost:3000/customer.html
 echo Worker Portal    : http://localhost:3000/worker.html
+echo Admin Dashboard  : http://localhost:3000/admin.html
 echo API Docs         : http://localhost:4000/api-docs
 echo.
 echo To view live logs: docker compose logs -f

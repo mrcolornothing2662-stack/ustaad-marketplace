@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ustaad Admin Dashboard — Marketplace Operations & Dispute Resolution</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #1b3b22;
+      --primary-dark: #122817;
+      --primary-light: #285432;
+      --sage: #7d9b76;
+      --sage-light: #eaf1e8;
+      --ivory: #fbf8ee;
+      --ivory-surface: #f4efe0;
+      --surface-card: #ffffff;
+      --text-main: #19251b;
+      --text-muted: #5e6d60;
+      --border: #dcd7c7;
+      --accent-gold: #c29b38;
+      --danger: #b91c1c;
+      --danger-light: #fee2e2;
+      --success: #15803d;
+      --success-light: #dcfce7;
+      --warning: #b45309;
+      --warning-light: #fef3c7;
+      --shadow-sm: 0 1px 3px rgba(18, 40, 23, 0.08);
+      --shadow-md: 0 4px 12px rgba(18, 40, 23, 0.08);
+      --radius: 12px;
+      --font-heading: 'Playfair Display', Georgia, serif;
+      --font-body: 'Plus Jakarta Sans', system-ui, sans-serif;
+    }
+
+    [data-theme="dark"] {
+      --primary: #2d5a37;
+      --primary-dark: #1b3b22;
+      --primary-light: #3f794c;
+      --sage: #96b38f;
+      --sage-light: #1e2c20;
+      --ivory: #121813;
+      --ivory-surface: #1a221b;
+      --surface-card: #202b22;
+      --text-main: #f0f4f0;
+      --text-muted: #a4b3a5;
+      --border: #334435;
+      --danger-light: #451a1a;
+      --success-light: #163820;
+      --warning-light: #3f2a10;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-body);
+      background-color: var(--ivory);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header */
+    header {
+      background-color: var(--primary);
+      color: #fff;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: var(--shadow-md);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .logo-area { display: flex; align-items: center; gap: 0.75rem; }
+    .logo-icon {
+      width: 40px; height: 40px;
+      background: var(--ivory);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 1.25rem; color: var(--primary);
+    }
+    .logo-text h1 { font-family: var(--font-heading); font-size: 1.4rem; font-weight: 700; letter-spacing: -0.5px; }
+    .logo-text span { font-size: 0.75rem; color: var(--sage); letter-spacing: 1px; text-transform: uppercase; font-weight: 600; }
+
+    .header-actions { display: flex; align-items: center; gap: 1rem; }
+    .badge-admin {
+      background-color: var(--accent-gold);
+      color: #122817;
+      padding: 0.25rem 0.6rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .theme-toggle {
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      color: #fff;
+      border-radius: 8px;
+      padding: 0.4rem 0.8rem;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+
+    /* Layout */
+    .container {
+      display: flex;
+      flex: 1;
+    }
+
+    /* Sidebar Navigation */
+    nav.sidebar {
+      width: 250px;
+      background: var(--ivory-surface);
+      border-right: 1px solid var(--border);
+      padding: 1.5rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .nav-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border: none;
+      background: transparent;
+      border-radius: 8px;
+      color: var(--text-muted);
+      font-family: inherit;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.2s ease;
+    }
+    .nav-btn:hover {
+      background: var(--sage-light);
+      color: var(--primary);
+    }
+    .nav-btn.active {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    /* Main Content Area */
+    main.content {
+      flex: 1;
+      padding: 2rem;
+      overflow-y: auto;
+    }
+
+    /* Cards & Stats */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.25rem;
+      margin-bottom: 2rem;
+    }
+    .stat-card {
+      background: var(--surface-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .stat-card .label { font-size: 0.85rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+    .stat-card .val { font-family: var(--font-heading); font-size: 2rem; font-weight: 700; color: var(--primary); }
+    .stat-card.alert-card .val { color: var(--warning); }
+
+    /* Tables */
+    .table-container {
+      background: var(--surface-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-sm);
+      overflow-x: auto;
+      margin-bottom: 2rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.9rem;
+    }
+    th {
+      background: var(--ivory-surface);
+      color: var(--text-muted);
+      padding: 1rem 1.25rem;
+      font-weight: 600;
+      border-bottom: 1px solid var(--border);
+    }
+    td {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover { background-color: var(--ivory-surface); }
+
+    /* Badges */
+    .status-badge {
+      display: inline-block;
+      padding: 0.25rem 0.6rem;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .badge-approved, .badge-active, .badge-completed { background: var(--success-light); color: var(--success); }
+    .badge-pending, .badge-under_review { background: var(--warning-light); color: var(--warning); }
+    .badge-rejected, .badge-cancelled, .badge-suspended { background: var(--danger-light); color: var(--danger); }
+    .badge-disputed { background: #fee2e2; color: #b91c1c; border: 1px solid #ef4444; }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-main); }
+    .btn-outline:hover { background: var(--sage-light); border-color: var(--sage); }
+    .btn-success { background: var(--success); color: #fff; }
+    .btn-danger { background: var(--danger); color: #fff; }
+
+    /* Modal */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(18, 40, 23, 0.6);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 1rem;
+    }
+    .modal-box {
+      background: var(--surface-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      width: 100%;
+      max-width: 550px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      overflow: hidden;
+    }
+    .modal-header {
+      padding: 1.25rem 1.5rem;
+      background: var(--ivory-surface);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .modal-body { padding: 1.5rem; }
+    .modal-footer {
+      padding: 1rem 1.5rem;
+      background: var(--ivory-surface);
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.75rem;
+    }
+
+    /* Auth Banner if logged out */
+    .auth-card {
+      max-width: 440px;
+      margin: 4rem auto;
+      background: var(--surface-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2rem;
+      box-shadow: var(--shadow-md);
+      text-align: center;
+    }
+    .form-group { text-align: left; margin-bottom: 1.2rem; }
+    .form-group label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.4rem; }
+    .form-group input, .form-group textarea, .form-group select {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--ivory);
+      color: var(--text-main);
+      font-family: inherit;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="logo-area">
+      <div class="logo-icon">उ</div>
+      <div class="logo-text">
+        <h1>Ustaad Admin</h1>
+        <span>Operations & Governance</span>
+      </div>
+    </div>
+    <div class="header-actions">
+      <span class="badge-admin">Super Admin</span>
+      <button class="theme-toggle" onclick="toggleTheme()">🌓 Theme</button>
+      <button class="btn btn-outline" style="color:#fff; border-color: rgba(255,255,255,0.4);" id="authActionBtn" onclick="handleAuthAction()">Login</button>
+    </div>
+  </header>
+
+  <!-- Login Modal / Card if not authenticated -->
+  <div id="loginSection" class="auth-card" style="display:none;">
+    <h2 style="font-family:var(--font-heading); margin-bottom:0.5rem;">Admin Sign In</h2>
+    <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1.5rem;">Access requires system administrator privileges.</p>
+    <div class="form-group">
+      <label>Email Address</label>
+      <input type="email" id="adminEmail" value="admin@ustaad.local">
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="adminPassword" value="UstaadDev123!">
+    </div>
+    <button class="btn btn-primary" style="width:100%; justify-content:center;" onclick="performLogin()">Sign In as Admin</button>
+    <div style="margin-top:1rem; font-size:0.8rem; color:var(--text-muted);">
+      Pre-configured dev credentials: <code>admin@ustaad.local</code> / <code>UstaadDev123!</code>
+    </div>
+  </div>
+
+  <div class="container" id="dashboardSection">
+    <!-- Sidebar -->
+    <nav class="sidebar">
+      <button class="nav-btn active" onclick="switchTab('overview')">📊 Overview & Stats</button>
+      <button class="nav-btn" onclick="switchTab('verifications')">🪪 Worker Verifications</button>
+      <button class="nav-btn" onclick="switchTab('bookings')">📅 Bookings & Disputes</button>
+      <button class="nav-btn" onclick="switchTab('complaints')">⚠️ Complaints</button>
+      <button class="nav-btn" onclick="switchTab('categories')">🏷️ Categories</button>
+      <button class="nav-btn" onclick="switchTab('users')">👥 User Directory</button>
+      <button class="nav-btn" onclick="switchTab('audit')">📜 Audit Trail</button>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="content">
+
+      <!-- Tab: Overview -->
+      <section id="tab-overview">
+        <h2 style="font-family:var(--font-heading); font-size:1.8rem; margin-bottom:0.5rem;">Platform Operations</h2>
+        <p style="color:var(--text-muted); margin-bottom:1.5rem;">Real-time metrics from production PostgreSQL database.</p>
+        
+        <div class="stats-grid">
+          <div class="stat-card">
+            <span class="label">Total Registered Users</span>
+            <span class="val" id="metricUsers">0</span>
+          </div>
+          <div class="stat-card">
+            <span class="label">Active Verified Workers</span>
+            <span class="val" id="metricProviders">0</span>
+          </div>
+          <div class="stat-card alert-card">
+            <span class="label">Pending KYC / Verifications</span>
+            <span class="val" id="metricVerifications">0</span>
+          </div>
+          <div class="stat-card">
+            <span class="label">Completed Bookings</span>
+            <span class="val" id="metricCompleted">0</span>
+          </div>
+          <div class="stat-card alert-card">
+            <span class="label">Active Disputes & Complaints</span>
+            <span class="val" id="metricComplaints">0</span>
+          </div>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+          <h3 style="font-family:var(--font-heading);">Recent Platform Bookings</h3>
+          <button class="btn btn-outline" onclick="loadBookings()">Refresh</button>
+        </div>
+        <div class="table-container">
+          <table id="overviewBookingsTable">
+            <thead>
+              <tr>
+                <th>Booking ID</th>
+                <th>Customer</th>
+                <th>Worker</th>
+                <th>Preferred Time</th>
+                <th>Status</th>
+                <th>Est. Price</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody><tr><td colspan="7" style="text-align:center;">Loading records...</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Tab: Verifications -->
+      <section id="tab-verifications" style="display:none;">
+        <h2 style="font-family:var(--font-heading); font-size:1.8rem; margin-bottom:0.5rem;">Worker Verification Queue</h2>
+        <p style="color:var(--text-muted); margin-bottom:1.5rem;">Review DigiLocker & identity evidence before granting verified badges.</p>
+
+        <div class="table-container">
+          <table id="verificationsTable">
+            <thead>
+              <tr>
+                <th>Request ID</th>
+                <th>Worker Name</th>
+                <th>Type</th>
+                <th>Status</th>
+                <th>Submission Date</th>
+                <th>Evidence</th>
+                <th>Review Actions</th>
+              </tr>
+            </thead>
+            <tbody><tr><td colspan="7" style="text-align:center;">Loading verifications...</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Tab: Bookings & Disputes -->
+      <section id="tab-bookings" style="display:none;">
+        <h2 style="font-family:var(--font-heading); font-size:1.8rem; margin-bottom:0.5rem;">Booking Management & Disputes</h2>
+        <p style="color:var(--text-muted); margin-bottom:1.5rem;">Resolve customer/worker pricing and service disputes with full audit notes.</p>
+
+        <div class="table-container">
+          <table id="allBookingsTable">
+            <thead>
+              <tr>
+                <th>Booking ID</th>
+                <th>Customer</th>
+                <th>Worker</th>
+                <th>Problem Description</th>
+                <th>Status</th>
+                <th>Payment</th>
+                <th>Dispute Resolution</th>
+              </tr>
+            </thead>
+            <tbody><tr><td colspan="7" style="text-align:center;">Loading bookings...</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Tab: Complaints -->
+      <section id="tab-complaints" style="display:none;">
+        <h2 style="font-family:var(--font-heading); font-size:1.8rem; margin-bottom:0.5rem;">Complaints Resolution</h2>
+        <p style="color:var(--text-muted); margin-bottom:1.5rem;">Formal dispute and customer grievances submitted via in-app support.</p>
+
+        <div class="table-container">
+          <table id="complaintsTable">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Booking ID</th>
+                <th>Reason</th>
+                <th>Status</th>
+                <th>Created</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody><tr><td colspan="6" style="text-align:center;">Loading complaints...</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Tab: Categories -->
+      <section id="tab-categories" style="display:none;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+          <div>
+            <h2 style="font-family:var(--font-heading); font-size:1.8rem;">Service Categories</h2>
+            <p style="color:var(--text-muted);">Manage marketplace service offerings.</p>
+          </div>
+          <button class="btn btn-primary" onclick="openAddCategoryModal()">+ Add New Category</button>
+        </div>
+
+        <div class="table-container">
+          <table id="categoriesTable">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Category Name</th>
+                <th>Slug</th>
+                <th>Active Services</th>
+              </tr>
+            </thead>
+            <tbody><tr><td colspan="4" style="text-align:center;">Loading categories...</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Tab: Users -->
+      <section id="tab-users" style="display:none;">
+        <h2 style="font-family:var(--font-heading); font-size:1.8rem; margin-bottom:0.5rem;">Registered Users Directory</h2>
+        <p style="color:var(--text-muted); margin-bottom:1.5rem;">Inspect user roles, phone verification, and suspend fraudulent providers.</p>
+
+        <div class="table-container">
+          <table id="usersTable">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Phone Verified</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody><tr><td colspan="7" style="text-align:center;">Loading users...</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Tab: Audit Trail -->
+      <section id="tab-audit" style="display:none;">
+        <h2 style="font-family:var(--font-heading); font-size:1.8rem; margin-bottom:0.5rem;">Admin Audit Trail</h2>
+        <p style="color:var(--text-muted); margin-bottom:1.5rem;">Immutable activity log of all verification decisions and dispute resolutions.</p>
+
+        <div class="table-container">
+          <table id="auditTable">
+            <thead>
+              <tr>
+                <th>Timestamp</th>
+                <th>Action</th>
+                <th>Target Type</th>
+                <th>Target ID</th>
+                <th>Actor ID</th>
+                <th>Metadata</th>
+              </tr>
+            </thead>
+            <tbody><tr><td colspan="6" style="text-align:center;">Loading audit logs...</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- Verification Decision Modal -->
+  <div id="decisionModal" class="modal-backdrop">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 style="font-family:var(--font-heading);">Review Verification Request</h3>
+        <button class="btn btn-outline" onclick="closeModal('decisionModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="decisionRequestId">
+        <div class="form-group">
+          <label>Decision</label>
+          <select id="decisionStatus">
+            <option value="APPROVED">Approve (Grant Verified Badge)</option>
+            <option value="RESUBMISSION_REQUIRED">Request Resubmission</option>
+            <option value="REJECTED">Reject Verification</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Reason / Notes for Worker</label>
+          <textarea id="decisionReason" rows="3" placeholder="Enter reason or instructions for the professional..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('decisionModal')">Cancel</button>
+        <button class="btn btn-primary" onclick="submitVerificationDecision()">Submit Decision</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dispute Resolution Modal -->
+  <div id="disputeModal" class="modal-backdrop">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 style="font-family:var(--font-heading);">Resolve Booking Dispute</h3>
+        <button class="btn btn-outline" onclick="closeModal('disputeModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="disputeBookingId">
+        <div class="form-group">
+          <label>Resolution Action</label>
+          <select id="disputeStatus">
+            <option value="COMPLETED">Resolve as Completed (Settle Payment to Worker)</option>
+            <option value="CANCELLED_BY_PROVIDER">Cancel Booking (Worker Fault / No Charge)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Administrative Note (Saved to Audit Log)</label>
+          <textarea id="disputeNote" rows="3" placeholder="Explain the investigation outcome and reason..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('disputeModal')">Cancel</button>
+        <button class="btn btn-primary" onclick="submitDisputeResolution()">Confirm Resolution</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Category Modal -->
+  <div id="categoryModal" class="modal-backdrop">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 style="font-family:var(--font-heading);">Create Service Category</h3>
+        <button class="btn btn-outline" onclick="closeModal('categoryModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>Category Name</label>
+          <input type="text" id="catName" placeholder="e.g. Appliance Repair">
+        </div>
+        <div class="form-group">
+          <label>Slug</label>
+          <input type="text" id="catSlug" placeholder="e.g. appliance-repair">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('categoryModal')">Cancel</button>
+        <button class="btn btn-primary" onclick="submitCreateCategory()">Create Category</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = 'http://localhost:4000/api/v1';
+    let accessToken = sessionStorage.getItem('ustaad_admin_token') || null;
+
+    function toggleTheme() {
+      const current = document.documentElement.getAttribute('data-theme');
+      const next = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+    }
+
+    async function apiCall(endpoint, method = 'GET', body = null) {
+      const headers = { 'Content-Type': 'application/json' };
+      if (accessToken) headers['Authorization'] = `Bearer ${accessToken}`;
+
+      const res = await fetch(`${API_BASE}${endpoint}`, {
+        method,
+        headers,
+        body: body ? JSON.stringify(body) : null
+      });
+
+      if (res.status === 401) {
+        accessToken = null;
+        sessionStorage.removeItem('ustaad_admin_token');
+        showAuthScreen();
+        throw new Error('Unauthorized');
+      }
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ message: res.statusText }));
+        throw new Error(err.message || 'API request failed');
+      }
+
+      if (res.status === 204) return null;
+      return res.json();
+    }
+
+    function showAuthScreen() {
+      document.getElementById('dashboardSection').style.display = 'none';
+      document.getElementById('loginSection').style.display = 'block';
+      document.getElementById('authActionBtn').textContent = 'Login';
+    }
+
+    function showDashboard() {
+      document.getElementById('dashboardSection').style.display = 'flex';
+      document.getElementById('loginSection').style.display = 'none';
+      document.getElementById('authActionBtn').textContent = 'Logout';
+      loadMetrics();
+      loadBookings();
+    }
+
+    function handleAuthAction() {
+      if (accessToken) {
+        accessToken = null;
+        sessionStorage.removeItem('ustaad_admin_token');
+        showAuthScreen();
+      } else {
+        showAuthScreen();
+      }
+    }
+
+    async function performLogin() {
+      const email = document.getElementById('adminEmail').value.trim();
+      const password = document.getElementById('adminPassword').value;
+
+      try {
+        const res = await apiCall('/auth/login', 'POST', { email, password });
+        if (res.user.role !== 'ADMIN') {
+          alert('Access denied: Account is not a platform administrator.');
+          return;
+        }
+        accessToken = res.accessToken;
+        sessionStorage.setItem('ustaad_admin_token', accessToken);
+        showDashboard();
+      } catch (err) {
+        alert('Login failed: ' + err.message);
+      }
+    }
+
+    function switchTab(tab) {
+      document.querySelectorAll('nav.sidebar .nav-btn').forEach(b => b.classList.remove('active'));
+      event.target.classList.add('active');
+
+      document.querySelectorAll('main.content > section').forEach(s => s.style.display = 'none');
+      const activeSection = document.getElementById(`tab-${tab}`);
+      if (activeSection) activeSection.style.display = 'block';
+
+      if (tab === 'overview') { loadMetrics(); loadBookings(); }
+      else if (tab === 'verifications') { loadVerifications(); }
+      else if (tab === 'bookings') { loadAllBookings(); }
+      else if (tab === 'complaints') { loadComplaints(); }
+      else if (tab === 'categories') { loadCategories(); }
+      else if (tab === 'users') { loadUsers(); }
+      else if (tab === 'audit') { loadAuditLogs(); }
+    }
+
+    async function loadMetrics() {
+      try {
+        const m = await apiCall('/admin/metrics');
+        document.getElementById('metricUsers').textContent = m.totalUsers;
+        document.getElementById('metricProviders').textContent = m.activeProviders;
+        document.getElementById('metricVerifications').textContent = m.pendingVerifications;
+        document.getElementById('metricCompleted').textContent = m.completedBookings;
+        document.getElementById('metricComplaints').textContent = m.openComplaints;
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function loadBookings() {
+      try {
+        const list = await apiCall('/admin/bookings');
+        const tbody = document.querySelector('#overviewBookingsTable tbody');
+        if (!list || !list.length) {
+          tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">No bookings found.</td></tr>';
+          return;
+        }
+        tbody.innerHTML = list.slice(0, 10).map(b => `
+          <tr>
+            <td><code>${b.id.substring(0, 8)}...</code></td>
+            <td><strong>${b.customer?.user?.name || 'Customer'}</strong><br><small>${b.customer?.user?.phone || ''}</small></td>
+            <td><strong>${b.provider?.user?.name || 'Worker'}</strong><br><small>${b.provider?.user?.phone || ''}</small></td>
+            <td>${new Date(b.preferredAt).toLocaleDateString()}</td>
+            <td><span class="status-badge badge-${b.status.toLowerCase()}">${b.status}</span></td>
+            <td>₹${b.finalAmount || b.revisedPrice || b.estimatedPrice || '0'}</td>
+            <td>
+              ${b.status === 'DISPUTED' ? `<button class="btn btn-danger btn-sm" onclick="openDisputeModal('${b.id}')">Resolve Dispute</button>` : `<button class="btn btn-outline btn-sm" onclick="alert('Booking status: ${b.status}')">View</button>`}
+            </td>
+          </tr>
+        `).join('');
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function loadVerifications() {
+      try {
+        const rows = await apiCall('/admin/verifications');
+        const tbody = document.querySelector('#verificationsTable tbody');
+        if (!rows.length) {
+          tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">No pending verification requests.</td></tr>';
+          return;
+        }
+        tbody.innerHTML = rows.map(v => `
+          <tr>
+            <td><code>${v.id.substring(0, 8)}...</code></td>
+            <td><strong>${v.provider?.user?.name || 'Worker'}</strong></td>
+            <td>${v.verificationType}</td>
+            <td><span class="status-badge badge-${v.status.toLowerCase()}">${v.status}</span></td>
+            <td>${new Date(v.createdAt).toLocaleDateString()}</td>
+            <td>
+              <a href="${API_BASE}/admin/verifications/${v.id}/evidence" target="_blank" class="btn btn-outline" style="padding:0.25rem 0.6rem; font-size:0.75rem;">View Document ↗</a>
+            </td>
+            <td>
+              <button class="btn btn-primary" style="padding:0.3rem 0.6rem; font-size:0.8rem;" onclick="openDecisionModal('${v.id}')">Decide</button>
+            </td>
+          </tr>
+        `).join('');
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function loadAllBookings() {
+      try {
+        const list = await apiCall('/admin/bookings');
+        const tbody = document.querySelector('#allBookingsTable tbody');
+        if (!list.length) {
+          tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">No bookings recorded.</td></tr>';
+          return;
+        }
+        tbody.innerHTML = list.map(b => `
+          <tr>
+            <td><code>${b.id.substring(0, 8)}...</code></td>
+            <td><strong>${b.customer?.user?.name || 'Customer'}</strong></td>
+            <td><strong>${b.provider?.user?.name || 'Worker'}</strong></td>
+            <td>${b.problemDescription}</td>
+            <td><span class="status-badge badge-${b.status.toLowerCase()}">${b.status}</span></td>
+            <td>${b.paymentRecord ? `${b.paymentRecord.paymentMethod} (₹${b.paymentRecord.amount})` : 'Unsettled'}</td>
+            <td>
+              ${b.status === 'DISPUTED' ? `<button class="btn btn-danger" onclick="openDisputeModal('${b.id}')">Resolve Dispute</button>` : `<span style="color:var(--text-muted); font-size:0.8rem;">No active dispute</span>`}
+            </td>
+          </tr>
+        `).join('');
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function loadComplaints() {
+      try {
+        const rows = await apiCall('/admin/complaints');
+        const tbody = document.querySelector('#complaintsTable tbody');
+        if (!rows.length) {
+          tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No complaints found.</td></tr>';
+          return;
+        }
+        tbody.innerHTML = rows.map(c => `
+          <tr>
+            <td><code>${c.id.substring(0, 8)}...</code></td>
+            <td><code>${c.bookingId?.substring(0, 8) || '-'}</code></td>
+            <td>${c.reason}</td>
+            <td><span class="status-badge badge-${c.status.toLowerCase()}">${c.status}</span></td>
+            <td>${new Date(c.createdAt).toLocaleDateString()}</td>
+            <td>
+              ${c.status === 'OPEN' ? `<button class="btn btn-outline" onclick="resolveComplaint('${c.id}')">Resolve</button>` : `<span style="font-size:0.8rem; color:var(--text-muted);">Resolved</span>`}
+            </td>
+          </tr>
+        `).join('');
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function loadCategories() {
+      try {
+        const cats = await apiCall('/categories');
+        const tbody = document.querySelector('#categoriesTable tbody');
+        tbody.innerHTML = cats.map(c => `
+          <tr>
+            <td><code>${c.id.substring(0, 8)}...</code></td>
+            <td><strong>${c.name}</strong></td>
+            <td><code>${c.slug}</code></td>
+            <td>${c.services ? c.services.map(s => s.name).join(', ') : 'None'}</td>
+          </tr>
+        `).join('');
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function loadUsers() {
+      try {
+        const users = await apiCall('/admin/users');
+        const tbody = document.querySelector('#usersTable tbody');
+        tbody.innerHTML = users.map(u => `
+          <tr>
+            <td><strong>${u.name}</strong></td>
+            <td>${u.email}</td>
+            <td>${u.phone || '-'}</td>
+            <td><span class="badge-admin" style="background:#e0f2fe; color:#0369a1;">${u.role}</span></td>
+            <td><span class="status-badge badge-${u.status.toLowerCase()}">${u.status}</span></td>
+            <td>${u.phoneVerifiedAt ? '✅ Verified' : '❌ Unverified'}</td>
+            <td>
+              ${u.role === 'PROVIDER' && u.status !== 'SUSPENDED' ? `<button class="btn btn-danger btn-sm" onclick="suspendProvider('${u.providerProfile?.id}')">Suspend</button>` : '-'}
+            </td>
+          </tr>
+        `).join('');
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function loadAuditLogs() {
+      try {
+        const logs = await apiCall('/admin/audit-logs');
+        const tbody = document.querySelector('#auditTable tbody');
+        tbody.innerHTML = logs.map(l => `
+          <tr>
+            <td>${new Date(l.createdAt).toLocaleString()}</td>
+            <td><strong>${l.action}</strong></td>
+            <td>${l.targetType}</td>
+            <td><code>${l.targetId?.substring(0, 8) || '-'}</code></td>
+            <td><code>${l.actorId?.substring(0, 8) || '-'}</code></td>
+            <td><pre style="font-size:0.75rem;">${JSON.stringify(l.metadata || {})}</pre></td>
+          </tr>
+        `).join('');
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function openDecisionModal(reqId) {
+      document.getElementById('decisionRequestId').value = reqId;
+      document.getElementById('decisionModal').style.display = 'flex';
+    }
+
+    async function submitVerificationDecision() {
+      const id = document.getElementById('decisionRequestId').value;
+      const status = document.getElementById('decisionStatus').value;
+      const reason = document.getElementById('decisionReason').value;
+
+      try {
+        await apiCall(`/admin/verifications/${id}/decision`, 'POST', { status, reason });
+        alert(`Verification request updated to ${status}`);
+        closeModal('decisionModal');
+        loadVerifications();
+        loadMetrics();
+      } catch (e) {
+        alert('Error: ' + e.message);
+      }
+    }
+
+    function openDisputeModal(bookingId) {
+      document.getElementById('disputeBookingId').value = bookingId;
+      document.getElementById('disputeModal').style.display = 'flex';
+    }
+
+    async function submitDisputeResolution() {
+      const id = document.getElementById('disputeBookingId').value;
+      const status = document.getElementById('disputeStatus').value;
+      const note = document.getElementById('disputeNote').value;
+
+      if (!note || note.length < 5) {
+        alert('Please enter an administrative explanation note (min 5 characters).');
+        return;
+      }
+
+      try {
+        await apiCall(`/admin/bookings/${id}/resolve-dispute`, 'POST', { status, note });
+        alert(`Dispute resolved! Booking set to ${status}.`);
+        closeModal('disputeModal');
+        loadAllBookings();
+        loadBookings();
+        loadMetrics();
+      } catch (e) {
+        alert('Error: ' + e.message);
+      }
+    }
+
+    async function resolveComplaint(id) {
+      const resolution = prompt('Enter resolution note for this complaint:');
+      if (!resolution) return;
+      try {
+        await apiCall(`/admin/complaints/${id}/resolve`, 'POST', {
+          status: 'RESOLVED',
+          resolution
+        });
+        alert('Complaint resolved successfully.');
+        loadComplaints();
+        loadMetrics();
+      } catch (e) {
+        alert('Error: ' + e.message);
+      }
+    }
+
+    function openAddCategoryModal() {
+      document.getElementById('categoryModal').style.display = 'flex';
+    }
+
+    async function submitCreateCategory() {
+      const name = document.getElementById('catName').value.trim();
+      const slug = document.getElementById('catSlug').value.trim();
+      if (!name || !slug) return alert('Name and Slug are required.');
+
+      try {
+        await apiCall('/categories', 'POST', { name, slug });
+        alert('Category created successfully.');
+        closeModal('categoryModal');
+        loadCategories();
+      } catch (e) {
+        alert('Error: ' + e.message);
+      }
+    }
+
+    async function suspendProvider(providerId) {
+      if (!confirm('Are you sure you want to suspend this provider?')) return;
+      try {
+        await apiCall(`/admin/providers/${providerId}/suspend`, 'POST');
+        alert('Provider suspended.');
+        loadUsers();
+        loadMetrics();
+      } catch (e) {
+        alert('Error: ' + e.message);
+      }
+    }
+
+    function closeModal(id) {
+      document.getElementById(id).style.display = 'none';
+    }
+
+    // Auto check login on load
+    window.addEventListener('DOMContentLoaded', () => {
+      if (accessToken) {
+        showDashboard();
+      } else {
+        showAuthScreen();
+      }
+    });
+  </script>
+</body>
+</html>

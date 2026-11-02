@@ -335,3 +335,110 @@ adminRouter.post("/bookings/:id/resolve-dispute", async (req, res, next) => {
     next(e);
   }
 });
+
+adminRouter.get("/users", async (req, res, next) => {
+  try {
+    const role = req.query.role as string | undefined;
+    const users = await prisma.user.findMany({
+      ...(role ? { where: { role: role.toUpperCase() as any } } : {}),
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        role: true,
+        status: true,
+        preferredLanguage: true,
+        phoneVerifiedAt: true,
+        createdAt: true,
+        customerProfile: { select: { id: true, addresses: true } },
+        providerProfile: {
+          select: {
+            id: true,
+            title: true,
+            approvedAt: true,
+            listingPaused: true,
+            badges: true,
+            trustScore: true,
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 100,
+    });
+    res.json(users);
+  } catch (e) {
+    next(e);
+  }
+});
+
+adminRouter.get("/bookings", async (req, res, next) => {
+  try {
+    const status = req.query.status as string | undefined;
+    const bookings = await prisma.booking.findMany({
+      ...(status ? { where: { status: status.toUpperCase() as any } } : {}),
+      include: {
+        customer: { select: { id: true, user: { select: { name: true, phone: true } } } },
+        provider: { select: { id: true, user: { select: { name: true, phone: true } } } },
+        paymentRecord: true,
+        files: true,
+      },
+      orderBy: { createdAt: "desc" },
+      take: 100,
+    });
+    res.json(bookings);
+  } catch (e) {
+    next(e);
+  }
+});
+
+adminRouter.get("/reviews", async (_req, res, next) => {
+  try {
+    const reviews = await prisma.review.findMany({
+      include: {
+        booking: {
+          select: {
+            id: true,
+            customer: { select: { user: { select: { name: true } } } },
+            provider: { select: { user: { select: { name: true } } } },
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 100,
+    });
+    res.json(reviews);
+  } catch (e) {
+    next(e);
+  }
+});
+
+adminRouter.post("/reviews/:id/moderate", async (req, res, next) => {
+  try {
+    const actor = (req as AuthenticatedRequest).user!;
+    const { moderationStatus } = z
+      .object({
+        moderationStatus: z.enum(["APPROVED", "PENDING", "HIDDEN"]),
+      })
+      .parse(req.body);
+
+    const review = await prisma.review.update({
+      where: { id: String(req.params.id) },
+      data: { moderationStatus },
+    });
+
+    await prisma.auditLog.create({
+      data: {
+        actorId: actor.id,
+        action: "REVIEW_MODERATION",
+        targetType: "Review",
+        targetId: review.id,
+        metadata: { moderationStatus },
+      },
+    });
+
+    res.json(review);
+  } catch (e) {
+    next(e);
+  }
+});

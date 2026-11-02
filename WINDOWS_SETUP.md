@@ -21,6 +21,7 @@ If you have **Docker Desktop** installed on your Windows machine:
 4. Your browser will automatically open:
    - **Customer Portal**: [http://localhost:3000/customer.html](http://localhost:3000/customer.html)
    - **Worker Portal**: [http://localhost:3000/worker.html](http://localhost:3000/worker.html)
+   - **Admin Dashboard**: [http://localhost:3000/admin.html](http://localhost:3000/admin.html)
    - **Interactive API Docs**: [http://localhost:4000/api-docs](http://localhost:4000/api-docs)
 
 ---
