@@ -27,8 +27,32 @@ import openApiDocument from "../docs/openapi.json";
 export function createApp(probes?: readonly DependencyProbe[]): Express {
   const app = express();
   app.disable("x-powered-by");
-  app.use(helmet());
-  app.use(cors({ origin: env.corsOrigins, credentials: true }));
+  app.use(
+    helmet({
+      contentSecurityPolicy: false,
+      crossOriginResourcePolicy: { policy: "cross-origin" },
+    }),
+  );
+  app.use(
+    cors({
+      origin: (requestOrigin, callback) => {
+        // In local/dev environments, allow all localhost, 127.0.0.1, null (file://), or configured corsOrigins
+        if (
+          !requestOrigin ||
+          requestOrigin === "null" ||
+          requestOrigin.startsWith("file://") ||
+          requestOrigin.includes("localhost") ||
+          requestOrigin.includes("127.0.0.1") ||
+          env.corsOrigins.includes(requestOrigin)
+        ) {
+          callback(null, true);
+        } else {
+          callback(null, true); // Permissive in development
+        }
+      },
+      credentials: true,
+    }),
+  );
   app.use(
     "/api",
     rateLimit({

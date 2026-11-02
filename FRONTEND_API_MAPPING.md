@@ -86,3 +86,4 @@ This document provides a strict, verified mapping between every frontend feature
 | `chat:send` | Client → Server | `{ bookingId, body, attachmentUrl? }` | Emits message to room; enforces 48h completion policy |
 | `chat:message`| Server → Client | `{ id, conversationId, body, attachmentUrl, createdAt, senderId, sender: { id, name, role }, bookingId }` | Broadcast to all room participants with enriched sender metadata |
 | `chat:error` | Server → Client | `{ message: string }` | Emitted when message fails validation or authorization |
+

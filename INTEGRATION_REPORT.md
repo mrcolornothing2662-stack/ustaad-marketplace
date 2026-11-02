@@ -91,3 +91,4 @@ The complete two-sided marketplace lifecycle was verified step-by-step:
   - Pluggable `StorageProvider` supports AWS S3, Cloudflare R2, MinIO, or local disk fallback (`private-uploads`).
 - **Payment Settlements**:
   - The platform is strictly a direct settlement directory (zero commission). Payment records track user-reported Cash and UPI settlements; Ustaad does not act as a banking intermediary.
+

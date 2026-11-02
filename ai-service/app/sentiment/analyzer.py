@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 class DeterministicSentimentAnalyzer:
     # English positive and negative terms
     positive_en = {
