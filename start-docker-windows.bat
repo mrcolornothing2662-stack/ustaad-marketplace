@@ -40,3 +40,4 @@ echo To view live logs: docker compose logs -f
 echo To stop services : docker compose down
 echo ======================================================================
 pause
+

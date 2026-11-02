@@ -61,3 +61,4 @@ Once running, access the services in your browser:
 - `WINDOWS_SETUP.md`: Full documentation tailored specifically for Windows users.
 - `FRONTEND_API_MAPPING.md`: 36 UI interactions mapped to exact REST & Socket.IO endpoints.
 - `INTEGRATION_REPORT.md`: Comprehensive end-to-end integration verification report.
+

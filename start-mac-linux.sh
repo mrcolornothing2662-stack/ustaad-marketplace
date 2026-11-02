@@ -69,3 +69,4 @@ echo "Press CTRL+C to stop all services."
 
 trap "kill $PID_AI $PID_BACKEND $PID_FRONTEND; exit 0" INT TERM
 wait
+

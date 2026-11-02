@@ -99,3 +99,4 @@ echo Mock SMS OTP: 123456
 echo ======================================================================
 echo Press any key to exit this launcher (services will keep running in their own windows).
 pause >nul
+

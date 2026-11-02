@@ -190,3 +190,4 @@ Get-Process -Id (Get-NetTCPConnection -LocalPort 4000).OwningProcess | Stop-Proc
 
 ### Q4: Python not recognized as an internal or external command
 **Solution**: Python was installed without checking "Add Python to PATH". Rerun the Python installer, select **Modify**, check **"Add Python to PATH"**, and restart your terminal.
+
