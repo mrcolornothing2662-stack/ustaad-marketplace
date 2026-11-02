@@ -17,6 +17,7 @@ reviewRouter.post("/", async (req, res, next) => {
           bookingId: z.string().uuid(),
           rating: z.number().int().min(1).max(5),
           text: z.string().trim().min(3).max(4000),
+          language: z.enum(["en", "hi"]).default("en").optional(),
         })
         .parse(req.body),
       u = (req as AuthenticatedRequest).user!;
@@ -30,9 +31,10 @@ reviewRouter.post("/", async (req, res, next) => {
         409,
         "Only an unreviewed completed booking can be reviewed",
       );
+    const lang = input.language || "en";
     let sentiment: { label: string; score: number; modelVersion: string };
     try {
-      sentiment = await ai.analyzeSentiment(input.text);
+      sentiment = await ai.analyzeSentiment(input.text, lang);
     } catch {
       sentiment = {
         label: "PENDING",
@@ -44,7 +46,10 @@ reviewRouter.post("/", async (req, res, next) => {
       await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${booking.providerId}))`;
       const review = await tx.review.create({
         data: {
-          ...input,
+          bookingId: input.bookingId,
+          rating: input.rating,
+          text: input.text,
+          language: lang === "hi" ? "HI" : "EN",
           providerId: booking.providerId,
           sentiment: {
             create: { ...sentiment, pending: sentiment.label === "PENDING" },

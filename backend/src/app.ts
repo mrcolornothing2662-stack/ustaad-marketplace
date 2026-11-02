@@ -46,6 +46,7 @@ export function createApp(probes?: readonly DependencyProbe[]): Express {
   api.use("/providers", providerRouter);
   api.use("/categories", categoryRouter);
   api.use("/search/providers", searchRouter);
+  api.use("/search", searchRouter);
   api.use("/bookings", bookingRouter);
   api.use("/bookings", photoRouter);
   api.use("/reviews", reviewRouter);

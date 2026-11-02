@@ -1839,19 +1839,216 @@
         ],
         "responses": {
           "200": {
-            "description": "Success (some creation operations return 201; deletion returns 204)"
-          },
-          "400": {
-            "description": "Invalid input"
-          },
-          "401": {
-            "description": "Missing/invalid session"
-          },
-          "403": {
-            "description": "Role or ownership restriction"
-          },
-          "409": {
-            "description": "Workflow or availability conflict"
+            "description": "Success"
+          }
+        }
+      }
+    },
+    "/admin/metrics": {
+      "get": {
+        "summary": "Platform operational monitoring metrics",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Platform counters and health statistics"
+          }
+        }
+      }
+    },
+    "/admin/bookings/{id}/resolve-dispute": {
+      "post": {
+        "summary": "Admin resolves a disputed booking",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "status": "COMPLETED",
+                "note": "Resolved after review of photo evidence"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Dispute resolved and booking transitioned"
+          }
+        }
+      }
+    },
+    "/bookings/{id}/propose-price": {
+      "post": {
+        "summary": "Worker proposes revised price for booking",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "revisedPrice": 850,
+                "reason": "Additional wiring parts required"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Price revision proposal submitted"
+          }
+        }
+      }
+    },
+    "/bookings/{id}/respond-price": {
+      "post": {
+        "summary": "Customer accepts or rejects price revision",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "action": "ACCEPT"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Response recorded and price updated if accepted"
+          }
+        }
+      }
+    },
+    "/bookings/{id}/evidence": {
+      "post": {
+        "summary": "Worker uploads work completion evidence photo",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "category": "AFTER_WORK",
+                "mimeType": "image/jpeg",
+                "contentBase64": "/9j/4AAQSkZJRg..."
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Evidence photo uploaded"
+          }
+        }
+      }
+    },
+    "/bookings/{id}/confirm-completion": {
+      "post": {
+        "summary": "Customer approves work completion with proof photo and digital signature",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "customerSignatureData": "data:image/svg+xml;base64,PHN2Zy...",
+                "proofPhotoBase64": "/9j/4AAQSkZJRg...",
+                "proofPhotoMimeType": "image/jpeg",
+                "completionNote": "Job completed satisfactorily"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Booking marked COMPLETED with signature"
+          }
+        }
+      }
+    },
+    "/chat/{bookingId}/read": {
+      "post": {
+        "summary": "Mark unread messages in booking chat as read",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Unread messages marked read"
+          }
+        }
+      }
+    },
+    "/account/device-tokens": {
+      "post": {
+        "summary": "Register device token for FCM push notifications",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "token": "fcm_token_string_here",
+                "platform": "android"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Device token registered"
+          }
+        }
+      }
+    },
+    "/search/geocode": {
+      "get": {
+        "summary": "Geocode Indian address to coordinates",
+        "security": [],
+        "parameters": [
+          {
+            "name": "address",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Coordinates and formatted address"
           }
         }
       }

@@ -26,6 +26,21 @@ const envSchema = z.object({
   REFRESH_TOKEN_DAYS: z.coerce.number().positive().default(30),
   AI_SERVICE_URL: z.string().url().default("http://localhost:8000"),
   MOCK_OTP: z.string().length(6).default("123456"),
+  DIGILOCKER_CLIENT_ID: z.string().default(""),
+  DIGILOCKER_CLIENT_SECRET: z.string().default(""),
+  DIGILOCKER_REDIRECT_URI: z
+    .string()
+    .default("http://localhost:4000/api/v1/verification/digilocker/callback"),
+  DIGILOCKER_BASE_URL: z
+    .string()
+    .default("https://api.digitallocker.gov.in/public/oauth2/1"),
+  DIGILOCKER_ENV: z.enum(["sandbox", "production", "mock"]).default("mock"),
+  SMS_PROVIDER: z.enum(["mock", "console", "fast2sms", "msg91"]).default("mock"),
+  SMS_API_KEY: z.string().default(""),
+  SMS_SENDER_ID: z.string().default("USTAAD"),
+  STORAGE_PROVIDER: z.enum(["local", "s3"]).default("local"),
+  STORAGE_PATH: z.string().default("private-uploads"),
+  FCM_PROJECT_ID: z.string().default(""),
 });
 
 const parsed = envSchema.safeParse(process.env);

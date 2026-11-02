@@ -85,6 +85,28 @@ enum ComplaintStatus {
   REJECTED
 }
 
+enum PriceRevisionStatus {
+  NONE
+  PROPOSED
+  ACCEPTED
+  REJECTED
+}
+
+enum FileCategory {
+  GENERAL
+  BEFORE_WORK
+  AFTER_WORK
+  CUSTOMER_PROOF
+  SIGNATURE
+  QUALIFICATION_DOC
+  IDENTITY_DOC
+}
+
+enum ReviewLanguage {
+  EN
+  HI
+}
+
 model User {
   id              String           @id @default(uuid())
   name            String
@@ -98,6 +120,7 @@ model User {
   providerProfile ProviderProfile?
   refreshTokens   RefreshToken[]
   notifications   Notification[]
+  deviceTokens    DeviceToken[]
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
   deletedAt       DateTime?
@@ -125,6 +148,8 @@ model PhoneVerification {
   expiresAt  DateTime
   verifiedAt DateTime?
   attempts   Int       @default(0)
+  lastSentAt DateTime?
+  ipAddress  String?
   createdAt  DateTime  @default(now())
 
   @@index([phone, expiresAt])
@@ -238,6 +263,8 @@ model VerificationRequest {
   documentType      DocumentType
   source            String
   status            VerificationStatus            @default(PENDING)
+  oauthState        String?
+  expiresAt         DateTime?
   consentRecordedAt DateTime?
   verifiedAt        DateTime?
   reviewedBy        String?
@@ -257,7 +284,11 @@ model VerificationDocumentMetadata {
   issuerName                 String?
   maskedReference            String?
   nameMatch                  Boolean?
+  dobMatch                   Boolean?
   photoMatch                 Boolean?
+  gender                     String?
+  state                      String?
+  documentDetails            Json?
   sourceVerified             Boolean             @default(false)
   temporaryEvidenceDeletedAt DateTime?
 }
@@ -277,6 +308,7 @@ model UploadedFile {
   storageKey            String               @unique
   mimeType              String
   sizeBytes             Int
+  category              FileCategory         @default(GENERAL)
   expiresAt             DateTime?
   verificationRequestId String?              @unique
   verificationRequest   VerificationRequest? @relation(fields: [verificationRequestId], references: [id])
@@ -300,8 +332,18 @@ model Booking {
   longitude              Float
   preferredAt            DateTime
   proposedAt             DateTime?
+  estimatedDurationMinutes Int                  @default(60)
+  bufferMinutes          Int                    @default(30)
   estimatedPrice         Decimal?               @db.Decimal(10, 2)
+  revisedPrice           Decimal?               @db.Decimal(10, 2)
+  priceRevisionNote      String?
+  priceRevisionStatus    PriceRevisionStatus    @default(NONE)
   finalAmount            Decimal?               @db.Decimal(10, 2)
+  startedAt              DateTime?
+  completedAt            DateTime?
+  customerSignatureData  String?
+  customerSignatureAt    DateTime?
+  completionNote         String?
   additionalInstructions String?
   statusHistory          BookingStatusHistory[]
   startOtp               JobStartOtp?
@@ -347,6 +389,7 @@ model Review {
   provider         ProviderProfile  @relation(fields: [providerId], references: [id])
   rating           Int
   text             String
+  language         ReviewLanguage   @default(EN)
   moderationStatus ModerationStatus @default(APPROVED)
   suspicious       Boolean          @default(false)
   sentiment        ReviewSentiment?
@@ -405,6 +448,9 @@ model ChatMessage {
   conversation   ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
   senderId       String
   body           String
+  attachmentUrl  String?
+  isRead         Boolean          @default(false)
+  readAt         DateTime?
   createdAt      DateTime         @default(now())
 
   @@index([conversationId, createdAt])
@@ -416,10 +462,24 @@ model Notification {
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   title     String
   body      String
+  type      String?
+  metadata  Json?
   readAt    DateTime?
   createdAt DateTime  @default(now())
 
   @@index([userId, readAt])
+}
+
+model DeviceToken {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  platform  String   @default("android")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
 }
 
 model Complaint {

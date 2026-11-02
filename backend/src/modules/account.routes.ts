@@ -217,6 +217,47 @@ accountRouter.post("/notifications/:id/read", async (req, res, next) => {
     next(e);
   }
 });
+accountRouter.post("/device-tokens", async (req, res, next) => {
+  try {
+    const d = z
+      .object({
+        token: z.string().min(10).max(500),
+        platform: z.enum(["android", "ios", "web"]).default("android"),
+      })
+      .parse(req.body);
+
+    const saved = await prisma.deviceToken.upsert({
+      where: { token: d.token },
+      create: {
+        userId: who(req).id,
+        token: d.token,
+        platform: d.platform,
+      },
+      update: {
+        userId: who(req).id,
+        platform: d.platform,
+      },
+    });
+    res.status(201).json({ id: saved.id, token: saved.token });
+  } catch (e) {
+    next(e);
+  }
+});
+
+accountRouter.delete("/device-tokens/:token", async (req, res, next) => {
+  try {
+    await prisma.deviceToken.deleteMany({
+      where: {
+        token: String(req.params.token),
+        userId: who(req).id,
+      },
+    });
+    res.sendStatus(204);
+  } catch (e) {
+    next(e);
+  }
+});
+
 accountRouter.post("/complaints", async (req, res, next) => {
   try {
     const u = who(req),

@@ -11,6 +11,7 @@ import {
 } from "../../common/security/tokens";
 import { env } from "../../config/env";
 import { authRepository } from "./auth.repository";
+import { getSmsProvider } from "../../integrations/sms/sms.provider";
 const publicUser = (user: {
   id: string;
   name: string;
@@ -120,8 +121,32 @@ export const authService = {
   },
   logout: (token: string) => authRepository.revokeRefresh(hashToken(token)),
   async sendOtp(phone: string) {
-    if (env.NODE_ENV === "production")
+    if (
+      env.NODE_ENV === "production" &&
+      env.SMS_PROVIDER === "mock" &&
+      !env.SMS_API_KEY
+    ) {
       throw new AppError(503, "SMS delivery adapter must be configured");
+    }
+
+    // Cooldown check: 30 seconds cooldown between OTP requests for the same phone
+    if (env.NODE_ENV !== "test") {
+      const recent = await prisma.phoneVerification.findFirst({
+        where: { phone, verifiedAt: null },
+        orderBy: { createdAt: "desc" },
+      });
+      if (recent && Date.now() - recent.createdAt.getTime() < 30000) {
+        const remaining = Math.ceil(
+          (30000 - (Date.now() - recent.createdAt.getTime())) / 1000,
+        );
+        throw new AppError(
+          429,
+          `Please wait ${remaining} seconds before requesting a new OTP`,
+          "OTP_COOLDOWN",
+        );
+      }
+    }
+
     const otp = String(randomInt(100000, 1000000));
     await prisma.phoneVerification.updateMany({
       where: { phone, verifiedAt: null },
@@ -132,9 +157,20 @@ export const authService = {
         phone,
         otpHash: await bcrypt.hash(otp, 10),
         expiresAt: new Date(Date.now() + 300000),
+        lastSentAt: new Date(),
       },
     });
-    return { phone, expiresInSeconds: 300, developmentOtp: otp };
+
+    const sms = getSmsProvider();
+    await sms.sendOtp(phone, otp);
+
+    return {
+      phone,
+      expiresInSeconds: 300,
+      ...(env.NODE_ENV !== "production" || env.SMS_PROVIDER === "mock"
+        ? { developmentOtp: otp }
+        : {}),
+    };
   },
   async verifyOtp(phone: string, otp: string) {
     const challenge = await prisma.phoneVerification.findFirst({

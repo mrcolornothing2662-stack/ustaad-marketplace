@@ -239,3 +239,99 @@ adminRouter.get("/audit-logs", async (_r, res, next) => {
     next(e);
   }
 });
+
+adminRouter.get("/metrics", async (_req, res, next) => {
+  try {
+    const [
+      totalUsers,
+      activeProviders,
+      pendingVerifications,
+      completedBookings,
+      cancelledBookings,
+      openComplaints,
+    ] = await Promise.all([
+      prisma.user.count(),
+      prisma.providerProfile.count({
+        where: { approvedAt: { not: null }, listingPaused: false },
+      }),
+      prisma.verificationRequest.count({
+        where: { status: { in: ["PENDING", "UNDER_REVIEW"] } },
+      }),
+      prisma.booking.count({
+        where: { status: { in: ["COMPLETED", "REVIEWED"] } },
+      }),
+      prisma.booking.count({
+        where: {
+          status: {
+            in: ["CANCELLED_BY_CUSTOMER", "CANCELLED_BY_PROVIDER", "NO_SHOW"],
+          },
+        },
+      }),
+      prisma.complaint.count({ where: { status: "OPEN" } }),
+    ]);
+
+    res.json({
+      totalUsers,
+      activeProviders,
+      pendingVerifications,
+      completedBookings,
+      cancelledBookings,
+      openComplaints,
+    });
+  } catch (e) {
+    next(e);
+  }
+});
+
+adminRouter.post("/bookings/:id/resolve-dispute", async (req, res, next) => {
+  try {
+    const actor = (req as AuthenticatedRequest).user!;
+    const { status, note } = z
+      .object({
+        status: z.enum(["COMPLETED", "CANCELLED_BY_PROVIDER"]),
+        note: z.string().min(5).max(2000),
+      })
+      .parse(req.body);
+
+    const booking = await prisma.booking.findUnique({
+      where: { id: String(req.params.id) },
+    });
+    if (!booking) throw new AppError(404, "Booking not found");
+    if (booking.status !== "DISPUTED") {
+      throw new AppError(409, "Booking is not in DISPUTED status");
+    }
+
+    const updated = await prisma.$transaction(async (tx) => {
+      const b = await tx.booking.update({
+        where: { id: booking.id, status: "DISPUTED" },
+        data: {
+          status,
+          statusHistory: {
+            create: {
+              fromStatus: "DISPUTED",
+              toStatus: status,
+              actorId: actor.id,
+              note: `Admin dispute resolution: ${note}`,
+            },
+          },
+        },
+      });
+
+      await tx.auditLog.create({
+        data: {
+          actorId: actor.id,
+          action: "DISPUTE_RESOLVED",
+          targetType: "Booking",
+          targetId: booking.id,
+          metadata: { resolvedTo: status, note },
+        },
+      });
+
+      return b;
+    });
+
+    res.json(updated);
+  } catch (e) {
+    next(e);
+  }
+});

@@ -2,10 +2,22 @@ import { Router } from "express";
 import { z } from "zod";
 import { prisma } from "../../config/database";
 import { searchRepository } from "./search.repository";
-import { haversineKm } from "./location";
+import { haversineKm, geocodeAddress } from "./location";
 import { rankProvider } from "./ranking";
 import { availableAt } from "../bookings/booking.validation";
+
 export const searchRouter = Router();
+
+searchRouter.get("/geocode", async (req, res, next) => {
+  try {
+    const { address } = z.object({ address: z.string().min(2) }).parse(req.query);
+    const coords = await geocodeAddress(address);
+    res.json(coords);
+  } catch (e) {
+    next(e);
+  }
+});
+
 searchRouter.get("/", async (req, res, next) => {
   try {
     const q = z
@@ -14,10 +26,12 @@ searchRouter.get("/", async (req, res, next) => {
         longitude: z.coerce.number().min(-180).max(180),
         distanceKm: z.coerce.number().positive().max(200).default(50),
         serviceId: z.string().uuid().optional(),
+        query: z.string().optional(),
         preferredAt: z.iso.datetime().optional(),
       })
       .parse(req.query);
     const providers = await searchRepository.approved(q.serviceId);
+    const normalizedQuery = q.query?.toLowerCase().trim();
     const result = providers
       .filter(
         (p) =>
@@ -25,6 +39,14 @@ searchRouter.get("/", async (req, res, next) => {
           p.longitude !== null &&
           p.user.status === "ACTIVE",
       )
+      .filter((p) => {
+        if (!normalizedQuery) return true;
+        const inTitle = p.title?.toLowerCase().includes(normalizedQuery);
+        const inDesc = p.description?.toLowerCase().includes(normalizedQuery);
+        const inName = p.user.name?.toLowerCase().includes(normalizedQuery);
+        const inServices = p.services.some((s) => s.service.name.toLowerCase().includes(normalizedQuery));
+        return inTitle || inDesc || inName || inServices;
+      })
       .map((p) => {
         const distance = haversineKm(q, {
             latitude: p.latitude!,
