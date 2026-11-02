@@ -1,0 +1,458 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  CUSTOMER
+  PROVIDER
+  ADMIN
+}
+
+enum AccountStatus {
+  ACTIVE
+  PROFILE_INCOMPLETE
+  VERIFICATION_REQUIRED
+  SUSPENDED
+  DELETED
+}
+
+enum VerificationStatus {
+  PENDING
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  RESUBMISSION_REQUIRED
+}
+
+enum VerificationType {
+  IDENTITY
+  SKILL
+  BACKGROUND
+}
+
+enum DocumentType {
+  AADHAAR
+  DRIVING_LICENCE
+  PASSPORT
+  VOTER_ID
+  PAN
+  ITI
+  APPRENTICESHIP
+  SKILL_INDIA
+  TRADE_LICENCE
+  DIPLOMA
+  OTHER
+}
+
+enum BadgeType {
+  MOBILE_VERIFIED
+  IDENTITY_VERIFIED
+  SKILL_VERIFIED
+  BACKGROUND_VERIFIED
+}
+
+enum BookingStatus {
+  PENDING
+  ACCEPTED
+  CONFIRMED
+  PROVIDER_ON_THE_WAY
+  IN_PROGRESS
+  AWAITING_CUSTOMER_CONFIRMATION
+  COMPLETED
+  REVIEWED
+  REJECTED
+  CANCELLED_BY_CUSTOMER
+  CANCELLED_BY_PROVIDER
+  NO_SHOW
+  DISPUTED
+}
+
+enum ModerationStatus {
+  PENDING
+  APPROVED
+  HIDDEN
+}
+
+enum ComplaintStatus {
+  OPEN
+  UNDER_REVIEW
+  RESOLVED
+  REJECTED
+}
+
+model User {
+  id              String           @id @default(uuid())
+  name            String
+  email           String           @unique
+  phone           String           @unique
+  passwordHash    String
+  role            UserRole
+  status          AccountStatus    @default(ACTIVE)
+  phoneVerifiedAt DateTime?
+  customerProfile CustomerProfile?
+  providerProfile ProviderProfile?
+  refreshTokens   RefreshToken[]
+  notifications   Notification[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  deletedAt       DateTime?
+
+  @@index([role, status])
+}
+
+model RefreshToken {
+  id         String    @id @default(uuid())
+  tokenHash  String    @unique
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  replacedBy String?
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt  DateTime  @default(now())
+
+  @@index([userId, expiresAt])
+}
+
+model PhoneVerification {
+  id         String    @id @default(uuid())
+  phone      String
+  otpHash    String
+  expiresAt  DateTime
+  verifiedAt DateTime?
+  attempts   Int       @default(0)
+  createdAt  DateTime  @default(now())
+
+  @@index([phone, expiresAt])
+}
+
+model Address {
+  id                String           @id @default(uuid())
+  label             String
+  line1             String
+  city              String
+  state             String
+  postalCode        String
+  latitude          Float
+  longitude         Float
+  customerProfileId String?
+  customerProfile   CustomerProfile? @relation(fields: [customerProfileId], references: [id], onDelete: Cascade)
+  createdAt         DateTime         @default(now())
+}
+
+model CustomerProfile {
+  id        String    @id @default(uuid())
+  userId    String    @unique
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  addresses Address[]
+  bookings  Booking[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model ProviderProfile {
+  id              String                 @id @default(uuid())
+  userId          String                 @unique
+  user            User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title           String?
+  description     String?
+  profilePhotoUrl String?
+  experienceYears Int                    @default(0)
+  languages       String[]
+  city            String?
+  latitude        Float?
+  longitude       Float?
+  serviceRadiusKm Float                  @default(15)
+  listingPaused   Boolean                @default(false)
+  approvedAt      DateTime?
+  services        ProviderService[]
+  availability    ProviderAvailability[]
+  verifications   VerificationRequest[]
+  badges          ProviderBadge[]
+  bookings        Booking[]
+  reviews         Review[]
+  trustScore      TrustScore?
+  trustHistory    TrustScoreHistory[]
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+
+  @@index([approvedAt, listingPaused])
+}
+
+model ServiceCategory {
+  id        String    @id @default(uuid())
+  name      String    @unique
+  slug      String    @unique
+  active    Boolean   @default(true)
+  services  Service[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Service {
+  id         String            @id @default(uuid())
+  name       String
+  slug       String
+  categoryId String
+  category   ServiceCategory   @relation(fields: [categoryId], references: [id])
+  providers  ProviderService[]
+  bookings   Booking[]
+
+  @@unique([categoryId, slug])
+}
+
+model ProviderService {
+  id            String          @id @default(uuid())
+  providerId    String
+  provider      ProviderProfile @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  serviceId     String
+  service       Service         @relation(fields: [serviceId], references: [id])
+  description   String?
+  startingPrice Decimal         @db.Decimal(10, 2)
+  active        Boolean         @default(true)
+
+  @@unique([providerId, serviceId])
+}
+
+model ProviderAvailability {
+  id         String          @id @default(uuid())
+  providerId String
+  provider   ProviderProfile @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  weekday    Int
+  startTime  String
+  endTime    String
+  enabled    Boolean         @default(true)
+
+  @@index([providerId, weekday])
+}
+
+model VerificationRequest {
+  id                String                        @id @default(uuid())
+  providerId        String
+  provider          ProviderProfile               @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  verificationType  VerificationType
+  documentType      DocumentType
+  source            String
+  status            VerificationStatus            @default(PENDING)
+  consentRecordedAt DateTime?
+  verifiedAt        DateTime?
+  reviewedBy        String?
+  rejectionReason   String?
+  metadata          VerificationDocumentMetadata?
+  evidence          UploadedFile?
+  createdAt         DateTime                      @default(now())
+  updatedAt         DateTime                      @updatedAt
+
+  @@index([status, verificationType])
+}
+
+model VerificationDocumentMetadata {
+  id                         String              @id @default(uuid())
+  requestId                  String              @unique
+  request                    VerificationRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  issuerName                 String?
+  maskedReference            String?
+  nameMatch                  Boolean?
+  photoMatch                 Boolean?
+  sourceVerified             Boolean             @default(false)
+  temporaryEvidenceDeletedAt DateTime?
+}
+
+model ProviderBadge {
+  id         String          @id @default(uuid())
+  providerId String
+  provider   ProviderProfile @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  type       BadgeType
+  awardedAt  DateTime        @default(now())
+
+  @@unique([providerId, type])
+}
+
+model UploadedFile {
+  id                    String               @id @default(uuid())
+  storageKey            String               @unique
+  mimeType              String
+  sizeBytes             Int
+  expiresAt             DateTime?
+  verificationRequestId String?              @unique
+  verificationRequest   VerificationRequest? @relation(fields: [verificationRequestId], references: [id])
+  bookingId             String?
+  booking               Booking?             @relation(fields: [bookingId], references: [id])
+  createdAt             DateTime             @default(now())
+}
+
+model Booking {
+  id                     String                 @id @default(uuid())
+  customerId             String
+  customer               CustomerProfile        @relation(fields: [customerId], references: [id])
+  providerId             String
+  provider               ProviderProfile        @relation(fields: [providerId], references: [id])
+  serviceId              String
+  service                Service                @relation(fields: [serviceId], references: [id])
+  status                 BookingStatus          @default(PENDING)
+  problemDescription     String
+  addressText            String
+  latitude               Float
+  longitude              Float
+  preferredAt            DateTime
+  proposedAt             DateTime?
+  estimatedPrice         Decimal?               @db.Decimal(10, 2)
+  finalAmount            Decimal?               @db.Decimal(10, 2)
+  additionalInstructions String?
+  statusHistory          BookingStatusHistory[]
+  startOtp               JobStartOtp?
+  conversation           ChatConversation?
+  review                 Review?
+  complaints             Complaint[]
+  files                  UploadedFile[]
+  createdAt              DateTime               @default(now())
+  updatedAt              DateTime               @updatedAt
+
+  @@index([customerId, status])
+  @@index([providerId, status])
+}
+
+model BookingStatusHistory {
+  id         String         @id @default(uuid())
+  bookingId  String
+  booking    Booking        @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  fromStatus BookingStatus?
+  toStatus   BookingStatus
+  actorId    String
+  note       String?
+  createdAt  DateTime       @default(now())
+
+  @@index([bookingId, createdAt])
+}
+
+model JobStartOtp {
+  id        String    @id @default(uuid())
+  bookingId String    @unique
+  booking   Booking   @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  otpHash   String
+  expiresAt DateTime
+  usedAt    DateTime?
+  attempts  Int       @default(0)
+}
+
+model Review {
+  id               String           @id @default(uuid())
+  bookingId        String           @unique
+  booking          Booking          @relation(fields: [bookingId], references: [id])
+  providerId       String
+  provider         ProviderProfile  @relation(fields: [providerId], references: [id])
+  rating           Int
+  text             String
+  moderationStatus ModerationStatus @default(APPROVED)
+  suspicious       Boolean          @default(false)
+  sentiment        ReviewSentiment?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  @@index([providerId, moderationStatus])
+}
+
+model ReviewSentiment {
+  id           String   @id @default(uuid())
+  reviewId     String   @unique
+  review       Review   @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  label        String
+  score        Float
+  modelVersion String
+  pending      Boolean  @default(false)
+  processedAt  DateTime @default(now())
+}
+
+model TrustScore {
+  id             String          @id @default(uuid())
+  providerId     String          @unique
+  provider       ProviderProfile @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  score          Float
+  components     Json
+  formulaVersion String
+  updatedAt      DateTime        @updatedAt
+}
+
+model TrustScoreHistory {
+  id             String          @id @default(uuid())
+  providerId     String
+  provider       ProviderProfile @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  previousScore  Float
+  newScore       Float
+  components     Json
+  reason         String
+  formulaVersion String
+  createdAt      DateTime        @default(now())
+
+  @@index([providerId, createdAt])
+}
+
+model ChatConversation {
+  id        String        @id @default(uuid())
+  bookingId String        @unique
+  booking   Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  messages  ChatMessage[]
+  createdAt DateTime      @default(now())
+}
+
+model ChatMessage {
+  id             String           @id @default(uuid())
+  conversationId String
+  conversation   ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String
+  body           String
+  createdAt      DateTime         @default(now())
+
+  @@index([conversationId, createdAt])
+}
+
+model Notification {
+  id        String    @id @default(uuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  body      String
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, readAt])
+}
+
+model Complaint {
+  id         String          @id @default(uuid())
+  bookingId  String
+  booking    Booking         @relation(fields: [bookingId], references: [id])
+  reporterId String
+  reason     String
+  status     ComplaintStatus @default(OPEN)
+  resolution String?
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+
+  @@index([status])
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  actorId    String
+  action     String
+  targetType String
+  targetId   String
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  @@index([targetType, targetId])
+}
+
+model PasswordReset {
+ id String @id @default(uuid())
+ userId String
+ tokenHash String @unique
+ expiresAt DateTime
+ usedAt DateTime?
+ createdAt DateTime @default(now())
+}

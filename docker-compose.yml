@@ -1,0 +1,67 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-ustaad}
+      POSTGRES_USER: ${POSTGRES_USER:-ustaad}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ustaad_dev_password}
+    ports:
+    - ${POSTGRES_PORT:-5432}:5432
+    volumes:
+    - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - pg_isready -U ${POSTGRES_USER:-ustaad} -d ${POSTGRES_DB:-ustaad}
+      interval: 5s
+      timeout: 5s
+      retries: 10
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    ports:
+    - ${REDIS_PORT:-6379}:6379
+    volumes:
+    - redis_data:/data
+    healthcheck:
+      test:
+      - CMD
+      - redis-cli
+      - ping
+      interval: 5s
+      timeout: 3s
+      retries: 10
+  ai:
+    build: ./ai-service
+    ports:
+    - 8000:8000
+  backend:
+    build: ./backend
+    ports:
+    - 4000:4000
+    environment:
+      NODE_ENV: development
+      PORT: '4000'
+      DATABASE_URL: postgresql://ustaad:ustaad_dev_password@postgres:5432/ustaad?schema=public
+      REDIS_URL: redis://redis:6379
+      AI_SERVICE_URL: http://ai:8000
+      JWT_ACCESS_SECRET: local-development-access-change-before-deploy
+      JWT_REFRESH_SECRET: local-development-refresh-change-before-deploy
+      CORS_ORIGINS: http://localhost:8080,http://localhost:8081,http://127.0.0.1:8080,http://127.0.0.1:8081
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      ai:
+        condition: service_started
+    volumes:
+    - private_uploads:/app/private-uploads
+    command:
+    - sh
+    - -c
+    - npx prisma migrate deploy && npm start
+volumes:
+  postgres_data: null
+  redis_data: null
+  private_uploads: null

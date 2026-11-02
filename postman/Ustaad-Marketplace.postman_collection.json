@@ -1,0 +1,896 @@
+{
+  "info": {
+    "name": "Ustaad Marketplace \u2014 corrected API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Sign in with the appropriate role before each action. Login stores the access/refresh tokens. Copy IDs from API responses into collection variables."
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:4000/api/v1"
+    },
+    {
+      "key": "accessToken",
+      "value": ""
+    },
+    {
+      "key": "refreshToken",
+      "value": ""
+    },
+    {
+      "key": "providerId",
+      "value": ""
+    },
+    {
+      "key": "serviceId",
+      "value": ""
+    },
+    {
+      "key": "bookingId",
+      "value": ""
+    },
+    {
+      "key": "id",
+      "value": ""
+    },
+    {
+      "key": "photoId",
+      "value": ""
+    },
+    {
+      "key": "requestId",
+      "value": ""
+    },
+    {
+      "key": "identityState",
+      "value": ""
+    },
+    {
+      "key": "phoneOtp",
+      "value": ""
+    },
+    {
+      "key": "recoveryToken",
+      "value": ""
+    },
+    {
+      "key": "fileBase64",
+      "value": ""
+    },
+    {
+      "key": "preferredAt",
+      "value": ""
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "if(!pm.collectionVariables.get('preferredAt')){const d=new Date(Date.now()+2*86400000);d.setUTCHours(5,0,0,0);pm.collectionVariables.set('preferredAt',d.toISOString());}"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "Register customer",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/auth/register/customer",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"New Customer\",\n  \"email\": \"new@example.test\",\n  \"phone\": \"+919876543210\",\n  \"password\": \"ChangeThis123!\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Register provider",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/auth/register/provider",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"New Provider\",\n  \"email\": \"provider@example.test\",\n  \"phone\": \"+919876543211\",\n  \"password\": \"ChangeThis123!\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Sign in",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/auth/login",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"customer1@ustaad.local\",\n  \"password\": \"UstaadDev123!\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "if(pm.response.code===200){const t=pm.response.json().tokens;pm.collectionVariables.set('accessToken',t.accessToken);pm.collectionVariables.set('refreshToken',t.refreshToken);}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Rotate refresh token",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/auth/refresh",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Revoke refresh token",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/auth/logout",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Token identity",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/auth/me",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Create phone challenge (development delivery)",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/auth/send-phone-otp",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"phone\": \"+919876543210\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Verify phone challenge",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/auth/verify-phone-otp",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"phone\": \"+919876543210\",\n  \"otp\": \"{{phoneOtp}}\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Request password recovery",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/auth/forgot-password",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"new@example.test\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Consume recovery token",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/auth/reset-password",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"token\": \"{{recoveryToken}}\",\n  \"password\": \"ChangedPassword123!\"\n}"
+        }
+      }
+    },
+    {
+      "name": "List active categories and services",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/categories",
+        "header": []
+      }
+    },
+    {
+      "name": "Rank approved nearby providers",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/search/providers?latitude=30.9&longitude=75.85&distanceKm=50",
+        "header": []
+      }
+    },
+    {
+      "name": "Public provider details",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/search/providers/{{id}}",
+        "header": []
+      }
+    },
+    {
+      "name": "Own professional profile",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/providers/me",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Update professional profile",
+      "request": {
+        "method": "PUT",
+        "url": "{{baseUrl}}/providers/me",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Electrician\",\n  \"description\": \"Experienced independent electrical repair professional.\",\n  \"experienceYears\": 5,\n  \"languages\": [\n    \"English\",\n    \"Hindi\"\n  ],\n  \"city\": \"Ludhiana\",\n  \"latitude\": 30.9,\n  \"longitude\": 75.85,\n  \"serviceRadiusKm\": 15\n}"
+        }
+      }
+    },
+    {
+      "name": "Own account/profile/addresses",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/account/profile",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Update account name",
+      "request": {
+        "method": "PUT",
+        "url": "{{baseUrl}}/account/profile",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Updated Customer\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Save a customer address",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/account/addresses",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"label\": \"Home\",\n  \"line1\": \"1 Demo Street\",\n  \"city\": \"Ludhiana\",\n  \"state\": \"Punjab\",\n  \"postalCode\": \"141001\",\n  \"latitude\": 30.9,\n  \"longitude\": 75.85\n}"
+        }
+      }
+    },
+    {
+      "name": "Delete own address",
+      "request": {
+        "method": "DELETE",
+        "url": "{{baseUrl}}/account/addresses/{{id}}",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Set provider service and pricing",
+      "request": {
+        "method": "PUT",
+        "url": "{{baseUrl}}/account/services/{{serviceId}}",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"startingPrice\": 499,\n  \"description\": \"Electrical repair\",\n  \"active\": true\n}"
+        }
+      }
+    },
+    {
+      "name": "Replace provider weekly availability",
+      "request": {
+        "method": "PUT",
+        "url": "{{baseUrl}}/account/availability",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "[\n  {\n    \"weekday\": 0,\n    \"startTime\": \"09:00\",\n    \"endTime\": \"18:00\",\n    \"enabled\": true\n  },\n  {\n    \"weekday\": 1,\n    \"startTime\": \"09:00\",\n    \"endTime\": \"18:00\",\n    \"enabled\": true\n  },\n  {\n    \"weekday\": 2,\n    \"startTime\": \"09:00\",\n    \"endTime\": \"18:00\",\n    \"enabled\": true\n  },\n  {\n    \"weekday\": 3,\n    \"startTime\": \"09:00\",\n    \"endTime\": \"18:00\",\n    \"enabled\": true\n  },\n  {\n    \"weekday\": 4,\n    \"startTime\": \"09:00\",\n    \"endTime\": \"18:00\",\n    \"enabled\": true\n  },\n  {\n    \"weekday\": 5,\n    \"startTime\": \"09:00\",\n    \"endTime\": \"18:00\",\n    \"enabled\": true\n  },\n  {\n    \"weekday\": 6,\n    \"startTime\": \"09:00\",\n    \"endTime\": \"18:00\",\n    \"enabled\": true\n  }\n]"
+        }
+      }
+    },
+    {
+      "name": "Pause or resume listing",
+      "request": {
+        "method": "PUT",
+        "url": "{{baseUrl}}/account/listing",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"listingPaused\": false\n}"
+        }
+      }
+    },
+    {
+      "name": "Own provider reviews",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/account/reviews",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Own trust history",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/account/trust-history",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Own notifications",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/account/notifications",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Mark own notification read",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/account/notifications/{{id}}/read",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Own complaints",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/account/complaints",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Submit a booking complaint",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/account/complaints",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"bookingId\": \"{{bookingId}}\",\n  \"reason\": \"Please investigate the service issue.\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Create customer booking",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/bookings",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"providerId\": \"{{providerId}}\",\n  \"serviceId\": \"{{serviceId}}\",\n  \"problemDescription\": \"Repair a faulty electrical switch\",\n  \"addressText\": \"1 Demo Street, Ludhiana\",\n  \"latitude\": 30.9,\n  \"longitude\": 75.85,\n  \"preferredAt\": \"{{preferredAt}}\"\n}"
+        }
+      }
+    },
+    {
+      "name": "List own bookings",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/bookings",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Own booking details and history",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/bookings/{{bookingId}}",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Apply role-aware booking transition",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/bookings/{{bookingId}}/transition",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"ACCEPTED\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Customer generates start OTP",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/bookings/{{bookingId}}/start-otp",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          }
+        ]
+      }
+    },
+    {
+      "name": "List private problem photos",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/bookings/{{bookingId}}/photos",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Customer uploads problem photo",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/bookings/{{bookingId}}/photos",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"mimeType\": \"image/png\",\n  \"contentBase64\": \"{{fileBase64}}\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Read private problem photo",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/bookings/{{bookingId}}/photos/{{photoId}}",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Read authorized booking chat",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/chat/{{bookingId}}/messages",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Send authorized booking message",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/chat/{{bookingId}}/messages",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"body\": \"Please ring the bell on arrival.\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Review completed booking once",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/reviews",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"bookingId\": \"{{bookingId}}\",\n  \"rating\": 5,\n  \"text\": \"Professional and helpful service.\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Start development identity consent",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/verification/digilocker/start",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"documentType\": \"AADHAAR\",\n  \"consent\": true\n}"
+        }
+      }
+    },
+    {
+      "name": "Complete own development consent challenge",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/verification/digilocker/callback",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"requestId\": \"{{requestId}}\",\n  \"state\": \"{{identityState}}\",\n  \"code\": \"development-consent\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Upload private certificate evidence",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/verification/skill",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"documentType\": \"OTHER\",\n  \"mimeType\": \"application/pdf\",\n  \"contentBase64\": \"{{fileBase64}}\"\n}"
+        }
+      }
+    },
+    {
+      "name": "List pending verification requests",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/admin/verifications",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Read unexpired private evidence",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/admin/verifications/{{id}}/evidence",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Approve/reject/request verification resubmission",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/admin/verifications/{{id}}/decision",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"APPROVED\",\n  \"reason\": \"Evidence reviewed\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Suspend provider and revoke sessions",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/admin/providers/{{id}}/suspend",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          }
+        ]
+      }
+    },
+    {
+      "name": "List complaints",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/admin/complaints",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Record complaint resolution",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/admin/complaints/{{id}}/resolve",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"status\": \"RESOLVED\",\n  \"resolution\": \"Both participants contacted and resolution recorded.\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Remove expired certificate evidence",
+      "request": {
+        "method": "POST",
+        "url": "{{baseUrl}}/admin/evidence/cleanup",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          }
+        ]
+      }
+    },
+    {
+      "name": "List administrative audit records",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/admin/audit-logs",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{accessToken}}"
+          }
+        ]
+      }
+    }
+  ]
+}

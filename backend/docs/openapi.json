@@ -1,0 +1,1869 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Ustaad Marketplace API",
+    "version": "1.1.0",
+    "description": "Development marketplace API. See START_HERE.md for external integration boundaries. Booking transitions remain role-aware."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:4000/api/v1"
+    }
+  ],
+  "paths": {
+    "/auth/register/customer": {
+      "post": {
+        "summary": "Register customer",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success (some creation operations return 201; deletion returns 204)"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Missing/invalid session"
+          },
+          "403": {
+            "description": "Role or ownership restriction"
+          },
+          "409": {
+            "description": "Workflow or availability conflict"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "name": "New Customer",
+                "email": "new@example.test",
+                "phone": "+919876543210",
+                "password": "ChangeThis123!"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/register/provider": {
+      "post": {
+        "summary": "Register provider",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success (some creation operations return 201; deletion returns 204)"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Missing/invalid session"
+          },
+          "403": {
+            "description": "Role or ownership restriction"
+          },
+          "409": {
+            "description": "Workflow or availability conflict"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "name": "New Provider",
+                "email": "provider@example.test",
+                "phone": "+919876543211",
+                "password": "ChangeThis123!"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "summary": "Sign in",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success (some creation operations return 201; deletion returns 204)"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Missing/invalid session"
+          },
+          "403": {
+            "description": "Role or ownership restriction"
+          },
+          "409": {
+            "description": "Workflow or availability conflict"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "email": "customer1@ustaad.local",
+                "password": "UstaadDev123!"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/refresh": {
+      "post": {
+        "summary": "Rotate refresh token",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success (some creation operations return 201; deletion returns 204)"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Missing/invalid session"
+          },
+          "403": {
+            "description": "Role or ownership restriction"
+          },
+          "409": {
+            "description": "Workflow or availability conflict"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "refreshToken": "{{refreshToken}}"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "summary": "Revoke refresh token",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success (some creation operations return 201; deletion returns 204)"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Missing/invalid session"
+          },
+          "403": {
+            "description": "Role or ownership restriction"
+          },
+          "409": {
+            "description": "Workflow or availability conflict"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "refreshToken": "{{refreshToken}}"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "summary": "Token identity",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success (some creation operations return 201; deletion returns 204)"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Missing/invalid session"
+          },
+          "403": {
+            "description": "Role or ownership restriction"
+          },
+          "409": {
+            "description": "Workflow or availability conflict"
+          }
+        }
+      }
+    },
+    "/auth/send-phone-otp": {
+      "post": {
+        "summary": "Create phone challenge (development delivery)",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success (some creation operations return 201; deletion returns 204)"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Missing/invalid session"
+          },
+          "403": {
+            "description": "Role or ownership restriction"
+          },
+          "409": {
+            "description": "Workflow or availability conflict"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "phone": "+919876543210"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/verify-phone-otp": {
+      "post": {
+        "summary": "Verify phone challenge",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success (some creation operations return 201; deletion returns 204)"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Missing/invalid session"
+          },
+          "403": {
+            "description": "Role or ownership restriction"
+          },
+          "409": {
+            "description": "Workflow or availability conflict"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "phone": "+919876543210",
+                "otp": "{{phoneOtp}}"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/forgot-password": {
+      "post": {
+        "summary": "Request password recovery",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success (some creation operations return 201; deletion returns 204)"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Missing/invalid session"
+          },
+          "403": {
+            "description": "Role or ownership restriction"
+          },
+          "409": {
+            "description": "Workflow or availability conflict"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "email": "new@example.test"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/reset-password": {
+      "post": {
+        "summary": "Consume recovery token",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success (some creation operations return 201; deletion returns 204)"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Missing/invalid session"
+          },
+          "403": {
+            "description": "Role or ownership restriction"
+          },
+          "409": {
+            "description": "Workflow or availability conflict"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "token": "{{recoveryToken}}",
+                "password": "ChangedPassword123!"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/categories": {
+      "get": {
+        "summary": "List active categories and services",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success (some creation operations return 201; deletion returns 204)"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Missing/invalid session"
+          },
+          "403": {
+            "description": "Role or ownership restriction"
+          },
+          "409": {
+            "description": "Workflow or availability conflict"
+          }
+        }
+      }
+    },
+    "/search/providers": {
+      "get": {
+        "summary": "Rank approved nearby providers",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success (some creation operations return 201; deletion returns 204)"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Missing/invalid session"
+          },
+          "403": {
+            "description": "Role or ownership restriction"
+          },
+          "409": {
+            "description": "Workflow or availability conflict"
+          }
+        },
+        "parameters": [
+          {
+            "in": "query",
+            "name": "latitude",
+            "required": true,
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "longitude",
+            "required": true,
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "distanceKm",
+            "required": false,
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "in": "query",
+            "name": "serviceId",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "preferredAt",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/search/providers/{id}": {
+      "get": {
+        "summary": "Public provider details",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success (some creation operations return 201; deletion returns 204)"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Missing/invalid session"
+          },
+          "403": {
+            "description": "Role or ownership restriction"
+          },
+          "409": {
+            "description": "Workflow or availability conflict"
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/providers/me": {
+      "get": {
+        "summary": "Own professional profile",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success (some creation operations return 201; deletion returns 204)"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Missing/invalid session"
+          },
+          "403": {
+            "description": "Role or ownership restriction"
+          },
+          "409": {
+            "description": "Workflow or availability conflict"
+          }
+        }
+      },
+      "put": {
+        "summary": "Update professional profile",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success (some creation operations return 201; deletion returns 204)"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Missing/invalid session"
+          },
+          "403": {
+            "description": "Role or ownership restriction"
+          },
+          "409": {
+            "description": "Workflow or availability conflict"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "title": "Electrician",
+                "description": "Experienced independent electrical repair professional.",
+                "experienceYears": 5,
+                "languages": [
+                  "English",
+                  "Hindi"
+                ],
+                "city": "Ludhiana",
+                "latitude": 30.9,
+                "longitude": 75.85,
+                "serviceRadiusKm": 15
+              }
+            }
+          }
+        }
+      }
+    },
+    "/account/profile": {
+      "get": {
+        "summary": "Own account/profile/addresses",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success (some creation operations return 201; deletion returns 204)"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Missing/invalid session"
+          },
+          "403": {
+            "description": "Role or ownership restriction"
+          },
+          "409": {
+            "description": "Workflow or availability conflict"
+          }
+        }
+      },
+      "put": {
+        "summary": "Update account name",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success (some creation operations return 201; deletion returns 204)"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Missing/invalid session"
+          },
+          "403": {
+            "description": "Role or ownership restriction"
+          },
+          "409": {
+            "description": "Workflow or availability conflict"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "name": "Updated Customer"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/account/addresses": {
+      "post": {
+        "summary": "Save a customer address",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success (some creation operations return 201; deletion returns 204)"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Missing/invalid session"
+          },
+          "403": {
+            "description": "Role or ownership restriction"
+          },
+          "409": {
+            "description": "Workflow or availability conflict"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "label": "Home",
+                "line1": "1 Demo Street",
+                "city": "Ludhiana",
+                "state": "Punjab",
+                "postalCode": "141001",
+                "latitude": 30.9,
+                "longitude": 75.85
+              }
+            }
+          }
+        }
+      }
+    },
+    "/account/addresses/{id}": {
+      "delete": {
+        "summary": "Delete own address",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success (some creation operations return 201; deletion returns 204)"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Missing/invalid session"
+          },
+          "403": {
+            "description": "Role or ownership restriction"
+          },
+          "409": {
+            "description": "Workflow or availability conflict"
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/account/services/{serviceId}": {
+      "put": {
+        "summary": "Set provider service and pricing",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success (some creation operations return 201; deletion returns 204)"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Missing/invalid session"
+          },
+          "403": {
+            "description": "Role or ownership restriction"
+          },
+          "409": {
+            "description": "Workflow or availability conflict"
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "serviceId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "startingPrice": 499,
+                "description": "Electrical repair",
+                "active": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "/account/availability": {
+      "put": {
+        "summary": "Replace provider weekly availability",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success (some creation operations return 201; deletion returns 204)"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Missing/invalid session"
+          },
+          "403": {
+            "description": "Role or ownership restriction"
+          },
+          "409": {
+            "description": "Workflow or availability conflict"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": [
+                {
+                  "weekday": 0,
+                  "startTime": "09:00",
+                  "endTime": "18:00",
+                  "enabled": true
+                },
+                {
+                  "weekday": 1,
+                  "startTime": "09:00",
+                  "endTime": "18:00",
+                  "enabled": true
+                },
+                {
+                  "weekday": 2,
+                  "startTime": "09:00",
+                  "endTime": "18:00",
+                  "enabled": true
+                },
+                {
+                  "weekday": 3,
+                  "startTime": "09:00",
+                  "endTime": "18:00",
+                  "enabled": true
+                },
+                {
+                  "weekday": 4,
+                  "startTime": "09:00",
+                  "endTime": "18:00",
+                  "enabled": true
+                },
+                {
+                  "weekday": 5,
+                  "startTime": "09:00",
+                  "endTime": "18:00",
+                  "enabled": true
+                },
+                {
+                  "weekday": 6,
+                  "startTime": "09:00",
+                  "endTime": "18:00",
+                  "enabled": true
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    "/account/listing": {
+      "put": {
+        "summary": "Pause or resume listing",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success (some creation operations return 201; deletion returns 204)"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Missing/invalid session"
+          },
+          "403": {
+            "description": "Role or ownership restriction"
+          },
+          "409": {
+            "description": "Workflow or availability conflict"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "listingPaused": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/account/reviews": {
+      "get": {
+        "summary": "Own provider reviews",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success (some creation operations return 201; deletion returns 204)"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Missing/invalid session"
+          },
+          "403": {
+            "description": "Role or ownership restriction"
+          },
+          "409": {
+            "description": "Workflow or availability conflict"
+          }
+        }
+      }
+    },
+    "/account/trust-history": {
+      "get": {
+        "summary": "Own trust history",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success (some creation operations return 201; deletion returns 204)"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Missing/invalid session"
+          },
+          "403": {
+            "description": "Role or ownership restriction"
+          },
+          "409": {
+            "description": "Workflow or availability conflict"
+          }
+        }
+      }
+    },
+    "/account/notifications": {
+      "get": {
+        "summary": "Own notifications",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success (some creation operations return 201; deletion returns 204)"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Missing/invalid session"
+          },
+          "403": {
+            "description": "Role or ownership restriction"
+          },
+          "409": {
+            "description": "Workflow or availability conflict"
+          }
+        }
+      }
+    },
+    "/account/notifications/{id}/read": {
+      "post": {
+        "summary": "Mark own notification read",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success (some creation operations return 201; deletion returns 204)"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Missing/invalid session"
+          },
+          "403": {
+            "description": "Role or ownership restriction"
+          },
+          "409": {
+            "description": "Workflow or availability conflict"
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/account/complaints": {
+      "get": {
+        "summary": "Own complaints",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success (some creation operations return 201; deletion returns 204)"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Missing/invalid session"
+          },
+          "403": {
+            "description": "Role or ownership restriction"
+          },
+          "409": {
+            "description": "Workflow or availability conflict"
+          }
+        }
+      },
+      "post": {
+        "summary": "Submit a booking complaint",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success (some creation operations return 201; deletion returns 204)"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Missing/invalid session"
+          },
+          "403": {
+            "description": "Role or ownership restriction"
+          },
+          "409": {
+            "description": "Workflow or availability conflict"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "bookingId": "{{bookingId}}",
+                "reason": "Please investigate the service issue."
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bookings": {
+      "post": {
+        "summary": "Create customer booking",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success (some creation operations return 201; deletion returns 204)"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Missing/invalid session"
+          },
+          "403": {
+            "description": "Role or ownership restriction"
+          },
+          "409": {
+            "description": "Workflow or availability conflict"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "providerId": "{{providerId}}",
+                "serviceId": "{{serviceId}}",
+                "problemDescription": "Repair a faulty electrical switch",
+                "addressText": "1 Demo Street, Ludhiana",
+                "latitude": 30.9,
+                "longitude": 75.85,
+                "preferredAt": "{{preferredAt}}"
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "List own bookings",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success (some creation operations return 201; deletion returns 204)"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Missing/invalid session"
+          },
+          "403": {
+            "description": "Role or ownership restriction"
+          },
+          "409": {
+            "description": "Workflow or availability conflict"
+          }
+        }
+      }
+    },
+    "/bookings/{id}": {
+      "get": {
+        "summary": "Own booking details and history",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success (some creation operations return 201; deletion returns 204)"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Missing/invalid session"
+          },
+          "403": {
+            "description": "Role or ownership restriction"
+          },
+          "409": {
+            "description": "Workflow or availability conflict"
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/bookings/{id}/transition": {
+      "post": {
+        "summary": "Apply role-aware booking transition",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success (some creation operations return 201; deletion returns 204)"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Missing/invalid session"
+          },
+          "403": {
+            "description": "Role or ownership restriction"
+          },
+          "409": {
+            "description": "Workflow or availability conflict"
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "status": "ACCEPTED"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bookings/{id}/start-otp": {
+      "post": {
+        "summary": "Customer generates start OTP",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success (some creation operations return 201; deletion returns 204)"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Missing/invalid session"
+          },
+          "403": {
+            "description": "Role or ownership restriction"
+          },
+          "409": {
+            "description": "Workflow or availability conflict"
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/bookings/{id}/photos": {
+      "get": {
+        "summary": "List private problem photos",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success (some creation operations return 201; deletion returns 204)"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Missing/invalid session"
+          },
+          "403": {
+            "description": "Role or ownership restriction"
+          },
+          "409": {
+            "description": "Workflow or availability conflict"
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      },
+      "post": {
+        "summary": "Customer uploads problem photo",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success (some creation operations return 201; deletion returns 204)"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Missing/invalid session"
+          },
+          "403": {
+            "description": "Role or ownership restriction"
+          },
+          "409": {
+            "description": "Workflow or availability conflict"
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "mimeType": "image/png",
+                "contentBase64": "{{fileBase64}}"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/bookings/{id}/photos/{photoId}": {
+      "get": {
+        "summary": "Read private problem photo",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success (some creation operations return 201; deletion returns 204)"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Missing/invalid session"
+          },
+          "403": {
+            "description": "Role or ownership restriction"
+          },
+          "409": {
+            "description": "Workflow or availability conflict"
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "photoId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/chat/{bookingId}/messages": {
+      "get": {
+        "summary": "Read authorized booking chat",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success (some creation operations return 201; deletion returns 204)"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Missing/invalid session"
+          },
+          "403": {
+            "description": "Role or ownership restriction"
+          },
+          "409": {
+            "description": "Workflow or availability conflict"
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "bookingId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      },
+      "post": {
+        "summary": "Send authorized booking message",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success (some creation operations return 201; deletion returns 204)"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Missing/invalid session"
+          },
+          "403": {
+            "description": "Role or ownership restriction"
+          },
+          "409": {
+            "description": "Workflow or availability conflict"
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "bookingId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "body": "Please ring the bell on arrival."
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reviews": {
+      "post": {
+        "summary": "Review completed booking once",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success (some creation operations return 201; deletion returns 204)"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Missing/invalid session"
+          },
+          "403": {
+            "description": "Role or ownership restriction"
+          },
+          "409": {
+            "description": "Workflow or availability conflict"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "bookingId": "{{bookingId}}",
+                "rating": 5,
+                "text": "Professional and helpful service."
+              }
+            }
+          }
+        }
+      }
+    },
+    "/verification/digilocker/start": {
+      "post": {
+        "summary": "Start development identity consent",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success (some creation operations return 201; deletion returns 204)"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Missing/invalid session"
+          },
+          "403": {
+            "description": "Role or ownership restriction"
+          },
+          "409": {
+            "description": "Workflow or availability conflict"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "documentType": "AADHAAR",
+                "consent": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "/verification/digilocker/callback": {
+      "post": {
+        "summary": "Complete own development consent challenge",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success (some creation operations return 201; deletion returns 204)"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Missing/invalid session"
+          },
+          "403": {
+            "description": "Role or ownership restriction"
+          },
+          "409": {
+            "description": "Workflow or availability conflict"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "requestId": "{{requestId}}",
+                "state": "{{identityState}}",
+                "code": "development-consent"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/verification/skill": {
+      "post": {
+        "summary": "Upload private certificate evidence",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success (some creation operations return 201; deletion returns 204)"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Missing/invalid session"
+          },
+          "403": {
+            "description": "Role or ownership restriction"
+          },
+          "409": {
+            "description": "Workflow or availability conflict"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "documentType": "OTHER",
+                "mimeType": "application/pdf",
+                "contentBase64": "{{fileBase64}}"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/verifications": {
+      "get": {
+        "summary": "List pending verification requests",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success (some creation operations return 201; deletion returns 204)"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Missing/invalid session"
+          },
+          "403": {
+            "description": "Role or ownership restriction"
+          },
+          "409": {
+            "description": "Workflow or availability conflict"
+          }
+        }
+      }
+    },
+    "/admin/verifications/{id}/evidence": {
+      "get": {
+        "summary": "Read unexpired private evidence",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success (some creation operations return 201; deletion returns 204)"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Missing/invalid session"
+          },
+          "403": {
+            "description": "Role or ownership restriction"
+          },
+          "409": {
+            "description": "Workflow or availability conflict"
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/admin/verifications/{id}/decision": {
+      "post": {
+        "summary": "Approve/reject/request verification resubmission",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success (some creation operations return 201; deletion returns 204)"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Missing/invalid session"
+          },
+          "403": {
+            "description": "Role or ownership restriction"
+          },
+          "409": {
+            "description": "Workflow or availability conflict"
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "status": "APPROVED",
+                "reason": "Evidence reviewed"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/providers/{id}/suspend": {
+      "post": {
+        "summary": "Suspend provider and revoke sessions",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success (some creation operations return 201; deletion returns 204)"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Missing/invalid session"
+          },
+          "403": {
+            "description": "Role or ownership restriction"
+          },
+          "409": {
+            "description": "Workflow or availability conflict"
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/admin/complaints": {
+      "get": {
+        "summary": "List complaints",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success (some creation operations return 201; deletion returns 204)"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Missing/invalid session"
+          },
+          "403": {
+            "description": "Role or ownership restriction"
+          },
+          "409": {
+            "description": "Workflow or availability conflict"
+          }
+        }
+      }
+    },
+    "/admin/complaints/{id}/resolve": {
+      "post": {
+        "summary": "Record complaint resolution",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success (some creation operations return 201; deletion returns 204)"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Missing/invalid session"
+          },
+          "403": {
+            "description": "Role or ownership restriction"
+          },
+          "409": {
+            "description": "Workflow or availability conflict"
+          }
+        },
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "example": {
+                "status": "RESOLVED",
+                "resolution": "Both participants contacted and resolution recorded."
+              }
+            }
+          }
+        }
+      }
+    },
+    "/admin/evidence/cleanup": {
+      "post": {
+        "summary": "Remove expired certificate evidence",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success (some creation operations return 201; deletion returns 204)"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Missing/invalid session"
+          },
+          "403": {
+            "description": "Role or ownership restriction"
+          },
+          "409": {
+            "description": "Workflow or availability conflict"
+          }
+        }
+      }
+    },
+    "/admin/audit-logs": {
+      "get": {
+        "summary": "List administrative audit records",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success (some creation operations return 201; deletion returns 204)"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Missing/invalid session"
+          },
+          "403": {
+            "description": "Role or ownership restriction"
+          },
+          "409": {
+            "description": "Workflow or availability conflict"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}

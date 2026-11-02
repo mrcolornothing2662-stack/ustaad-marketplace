@@ -1,0 +1,11 @@
+{
+  "name": "ustaad-marketplace",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "install:backend": "npm --prefix backend install",
+    "test": "npm --prefix backend test",
+    "build": "npm --prefix backend run build"
+  }
+}
+
