@@ -243,3 +243,4 @@ export function getStorageProvider(): StorageProvider {
   }
   return storageInstance;
 }
+

@@ -49,3 +49,4 @@ else
 fi
 
 echo "[Ustaad Restore] Database restored successfully from ${BACKUP_FILE} at $(date)."
+

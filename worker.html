@@ -1,0 +1,1730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ustaad — Worker Portal</title>
+  <meta name="description" content="Independent service professional portal with custom pricing, lead management, and direct customer settlement.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚙️</text></svg>">
+  <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+  <style>
+    :root {
+      --primary: #164E3D;
+      --primary-dark: #0E3528;
+      --primary-light: #236E57;
+      --primary-subtle: #E8F3EE;
+      --accent: #D97706;
+      --accent-hover: #B45309;
+      --accent-subtle: #FEF3C7;
+      --bg: #F8F6F0;
+      --surface: #FFFFFF;
+      --surface-elevated: #FFFFFF;
+      --text: #1F2937;
+      --text-muted: #6B7280;
+      --text-light: #9CA3AF;
+      --border: #E5E7EB;
+      --border-subtle: #F3F4F6;
+      --success: #10B981;
+      --success-subtle: #D1FAE5;
+      --warning: #F59E0B;
+      --danger: #EF4444;
+      --danger-subtle: #FEE2E2;
+      --radius-sm: 6px;
+      --radius-md: 12px;
+      --radius-lg: 18px;
+      --radius-full: 9999px;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+      --shadow-lg: 0 10px 25px rgba(0,0,0,0.12);
+      --font-scale: 1;
+      --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    body.dark-mode {
+      --primary: #2DD4BF;
+      --primary-dark: #14B8A6;
+      --primary-light: #5EEAD4;
+      --primary-subtle: #132E27;
+      --accent: #FBBF24;
+      --accent-hover: #F59E0B;
+      --accent-subtle: #362911;
+      --bg: #0F1715;
+      --surface: #172421;
+      --surface-elevated: #1F302C;
+      --text: #F3F4F6;
+      --text-muted: #9CA3AF;
+      --text-light: #6B7280;
+      --border: #283C37;
+      --border-subtle: #1C2C28;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+      --shadow-lg: 0 10px 25px rgba(0,0,0,0.5);
+    }
+
+    body.text-lg { --font-scale: 1.15; }
+    body.text-xl { --font-scale: 1.3; }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      font-size: calc(15px * var(--font-scale));
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    /* Top Bar */
+    .top-bar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 6px 16px;
+      font-size: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .zero-commission-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--success-subtle);
+      color: #065F46;
+      padding: 3px 10px;
+      border-radius: var(--radius-full);
+      font-weight: 700;
+      font-size: 11px;
+    }
+    .top-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .select-btn, .icon-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 4px 8px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: var(--transition);
+    }
+    .select-btn:hover, .icon-btn:hover {
+      background: var(--primary-subtle);
+      border-color: var(--primary);
+    }
+
+    /* Header */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 33px;
+      z-index: 40;
+      box-shadow: var(--shadow-sm);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: inherit;
+    }
+    .brand-logo {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #FFF;
+      font-size: 20px;
+      font-weight: bold;
+      box-shadow: var(--shadow-sm);
+    }
+    .brand-title {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--primary);
+      letter-spacing: -0.5px;
+      line-height: 1.1;
+    }
+    .brand-subtitle {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    /* Online/Offline Toggle */
+    .online-toggle-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--bg);
+      padding: 4px 10px;
+      border-radius: var(--radius-full);
+      border: 1px solid var(--border);
+    }
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 40px;
+      height: 22px;
+    }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider {
+      position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #D1D5DB;
+      transition: .3s;
+      border-radius: 34px;
+    }
+    .toggle-slider:before {
+      position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px;
+      background-color: white;
+      transition: .3s;
+      border-radius: 50%;
+    }
+    input:checked + .toggle-slider { background-color: var(--success); }
+    input:checked + .toggle-slider:before { transform: translateX(18px); }
+
+    .nav-tabs {
+      display: flex;
+      gap: 6px;
+      background: var(--bg);
+      padding: 4px;
+      border-radius: var(--radius-full);
+      border: 1px solid var(--border);
+    }
+    .nav-tab {
+      padding: 8px 16px;
+      border-radius: var(--radius-full);
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: var(--transition);
+      text-decoration: none;
+    }
+    .nav-tab:hover { color: var(--text); }
+    .nav-tab.active {
+      background: var(--surface);
+      color: var(--primary);
+      box-shadow: var(--shadow-sm);
+    }
+    .badge {
+      background: var(--danger);
+      color: white;
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: var(--radius-full);
+      font-weight: bold;
+    }
+
+    /* Main Container */
+    main {
+      flex: 1;
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 24px 16px 80px;
+    }
+
+    .tab-content {
+      display: none;
+      animation: fadeIn 0.25s ease;
+    }
+    .tab-content.active { display: block; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Common Components */
+    .btn {
+      padding: 10px 18px;
+      border-radius: var(--radius-md);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid transparent;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: var(--transition);
+      text-decoration: none;
+    }
+    .btn-primary { background: var(--primary); color: #FFF; }
+    .btn-primary:hover { background: var(--primary-dark); box-shadow: var(--shadow-sm); }
+    .btn-accent { background: var(--accent); color: #FFF; }
+    .btn-accent:hover { background: var(--accent-hover); }
+    .btn-outline { background: transparent; border-color: var(--border); color: var(--text); }
+    .btn-outline:hover { background: var(--primary-subtle); border-color: var(--primary); color: var(--primary); }
+    .btn-sm { padding: 6px 12px; font-size: 12px; border-radius: var(--radius-sm); }
+    .btn-danger { background: var(--danger); color: white; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      box-shadow: var(--shadow-sm);
+      transition: var(--transition);
+    }
+    .card:hover {
+      box-shadow: var(--shadow-md);
+      border-color: var(--primary-light);
+    }
+
+    /* KPI Grid */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .kpi-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .kpi-label { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; }
+    .kpi-val { font-size: 26px; font-weight: 800; color: var(--primary); }
+    .kpi-sub { font-size: 11px; color: var(--text-muted); }
+
+    /* Verification Status Banner */
+    .verification-banner {
+      background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%);
+      border: 1px solid #BFDBFE;
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+    body.dark-mode .verification-banner {
+      background: #1E293B;
+      border-color: #334155;
+    }
+
+    /* Stepper */
+    .stepper {
+      display: flex;
+      justify-content: space-between;
+      margin: 16px 0;
+      position: relative;
+    }
+    .stepper::before {
+      content: '';
+      position: absolute;
+      top: 14px;
+      left: 20px;
+      right: 20px;
+      height: 2px;
+      background: var(--border);
+      z-index: 1;
+    }
+    .step-node {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+    .step-circle {
+      width: 30px;
+      height: 30px;
+      border-radius: var(--radius-full);
+      background: var(--surface);
+      border: 2px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+    }
+    .step-node.done .step-circle { background: var(--success); border-color: var(--success); color: white; }
+    .step-node.active .step-circle { background: var(--primary); border-color: var(--primary); color: white; }
+    .step-node.active { color: var(--primary); font-weight: 700; }
+
+    /* Modals */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      padding: 20px;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal-box {
+      background: var(--surface);
+      border-radius: var(--radius-lg);
+      max-width: 580px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: var(--shadow-lg);
+      border: 1px solid var(--border);
+    }
+    .modal-header {
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .modal-title { font-size: 18px; font-weight: 700; }
+    .modal-close { background: transparent; border: none; font-size: 22px; cursor: pointer; color: var(--text-muted); }
+    .modal-body { padding: 24px; }
+    .form-control {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 13px;
+      outline: none;
+      transition: var(--transition);
+    }
+    .form-control:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px var(--primary-subtle);
+    }
+
+    /* Toast */
+    .toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 200;
+    }
+    .toast {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 12px 20px;
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-lg);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 280px;
+      font-size: 13px;
+    }
+    .toast.success { border-left: 4px solid var(--success); }
+    .toast.error { border-left: 4px solid var(--danger); }
+    .toast.info { border-left: 4px solid var(--primary); }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-muted);
+    }
+    .empty-icon { font-size: 40px; margin-bottom: 8px; opacity: 0.6; }
+
+    /* Chat Window */
+    .chat-container {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      height: 600px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+    .chat-sidebar { border-right: 1px solid var(--border); overflow-y: auto; background: var(--surface-elevated); }
+    .chat-conv-item {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border-subtle);
+      cursor: pointer;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    .chat-conv-item:hover, .chat-conv-item.active { background: var(--primary-subtle); }
+    .chat-main { display: flex; flex-direction: column; height: 100%; }
+    .chat-header { padding: 14px 20px; border-bottom: 1px solid var(--border); background: var(--surface); }
+    .chat-messages { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; background: var(--bg); }
+    .chat-bubble { max-width: 70%; padding: 10px 14px; border-radius: var(--radius-lg); font-size: 14px; }
+    .chat-bubble.mine { align-self: flex-end; background: var(--primary); color: white; border-bottom-right-radius: 4px; }
+    .chat-bubble.theirs { align-self: flex-start; background: var(--surface); border: 1px solid var(--border); color: var(--text); border-bottom-left-radius: 4px; }
+    .chat-bubble-meta { font-size: 10px; opacity: 0.7; margin-top: 4px; text-align: right; }
+    .chat-input-bar { padding: 14px 20px; border-top: 1px solid var(--border); display: flex; gap: 10px; background: var(--surface); }
+    .chat-input-bar input { flex: 1; padding: 10px 14px; border: 1px solid var(--border); border-radius: var(--radius-full); outline: none; background: var(--bg); color: var(--text); }
+
+    @media (max-width: 800px) {
+      .kpi-grid { grid-template-columns: 1fr 1fr; }
+      .verification-banner { flex-direction: column; gap: 14px; align-items: flex-start; }
+      .chat-container { grid-template-columns: 1fr; height: 480px; }
+      .chat-sidebar { display: none; }
+      .nav-tab span { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Announcement Bar -->
+  <div class="top-bar">
+    <div class="zero-commission-pill">
+      <span>🛡️</span>
+      <span id="txt-zero-commission">0% Commission Platform — 100% Client Payment is Yours</span>
+    </div>
+    <div class="top-controls">
+      <!-- Language -->
+      <select id="workerLangSelect" class="select-btn" onchange="changeWorkerLanguage(this.value)">
+        <option value="en">English (EN)</option>
+        <option value="hi">हिन्दी (HI)</option>
+        <option value="pa">ਪੰਜਾਬੀ (PA)</option>
+      </select>
+
+      <!-- Theme -->
+      <button class="icon-btn" onclick="toggleWorkerTheme()" title="Toggle Theme">
+        <span id="themeIcon">🌓</span>
+      </button>
+
+      <!-- Font Size -->
+      <button class="icon-btn" onclick="cycleWorkerTextSize()" title="Adjust Text Size">
+        <span>A±</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <header>
+    <a href="#dashboard" class="brand" onclick="switchWorkerTab('dashboard')">
+      <div class="brand-logo">W</div>
+      <div>
+        <div class="brand-title">USTAAD</div>
+        <div class="brand-subtitle" id="txt-portal-sub">Worker Business Portal</div>
+      </div>
+    </a>
+
+    <!-- Online/Offline Switch -->
+    <div class="online-toggle-wrap">
+      <span style="font-size:12px; font-weight:700;" id="txtOnlineStatus">Online</span>
+      <label class="toggle-switch">
+        <input type="checkbox" id="workerOnlineToggle" checked onchange="toggleOnlineStatus(this.checked)">
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="nav-tabs">
+      <button class="nav-tab active" data-tab="dashboard" onclick="switchWorkerTab('dashboard')">
+        <span>📊</span> <span id="nav-dash">Dashboard</span>
+      </button>
+      <button class="nav-tab" data-tab="requests" onclick="switchWorkerTab('requests')">
+        <span>📥</span> <span id="nav-req">Requests</span>
+        <span id="leadsBadge" class="badge" style="display:none">0</span>
+      </button>
+      <button class="nav-tab" data-tab="mywork" onclick="switchWorkerTab('mywork')">
+        <span>🛠️</span> <span id="nav-work">My Work</span>
+        <span id="activeJobsBadge" class="badge" style="display:none">0</span>
+      </button>
+      <button class="nav-tab" data-tab="chat" onclick="switchWorkerTab('chat')">
+        <span>💬</span> <span id="nav-chat">Messages</span>
+      </button>
+      <button class="nav-tab" data-tab="profile" onclick="switchWorkerTab('profile')">
+        <span>👤</span> <span id="nav-prof">Profile & Services</span>
+      </button>
+    </nav>
+
+    <!-- Header Actions -->
+    <div id="workerAuthBlock">
+      <button class="btn btn-primary btn-sm" onclick="openWorkerAuthModal('login')">
+        <span>Worker Sign In</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main>
+
+    <!-- TAB 1: DASHBOARD -->
+    <div id="tab-dashboard" class="tab-content active">
+      
+      <!-- DigiLocker Verification Banner -->
+      <div class="verification-banner" id="digilockerBanner">
+        <div>
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+            <span style="font-size:22px;">🏛️</span>
+            <strong style="font-size:16px;" id="txt-digilocker-title">DigiLocker Government Identity Verification</strong>
+            <span class="badge" id="digilockerBadge" style="background:#1D4ED8;">Required</span>
+          </div>
+          <p style="font-size:13px; color:var(--text-muted); max-width:650px;" id="txt-digilocker-desc">
+            Verify your Aadhaar or trade certificate directly with DigiLocker. Gain verified customer trust and higher ranking.
+          </p>
+        </div>
+        <button class="btn btn-primary" onclick="openDigilockerModal()" id="btnStartDigiLocker">
+          Verify via DigiLocker →
+        </button>
+      </div>
+
+      <!-- KPI Metrics Cards -->
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-label" id="kpi-earnings-label">Direct Earnings</div>
+          <div class="kpi-val" id="kpiTotalEarnings">₹0</div>
+          <div class="kpi-sub" style="color:var(--success); font-weight:600;">✓ 0% Platform Commission Deducted</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label" id="kpi-jobs-label">Completed Jobs</div>
+          <div class="kpi-val" id="kpiCompletedJobs">0</div>
+          <div class="kpi-sub" id="kpiCompletionRate">100% completion rate</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label" id="kpi-rating-label">Client Rating</div>
+          <div class="kpi-val" id="kpiAvgRating">0.0 ★</div>
+          <div class="kpi-sub" id="kpiReviewCount">0 customer reviews</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-label" id="kpi-trust-label">Trust Score</div>
+          <div class="kpi-val" id="kpiTrustScore">85</div>
+          <div class="kpi-sub">Profile completion: <strong id="kpiProfilePercent">0%</strong></div>
+        </div>
+      </div>
+
+      <!-- Quick Action Buttons -->
+      <div style="display:flex; gap:12px; margin-bottom:28px; flex-wrap:wrap;">
+        <button class="btn btn-outline btn-sm" onclick="switchWorkerTab('profile'); openServiceManagementModal();">
+          🏷️ Manage Services & Rates
+        </button>
+        <button class="btn btn-outline btn-sm" onclick="switchWorkerTab('profile'); openAvailabilityModal();">
+          ⏰ Configure Working Hours
+        </button>
+        <button class="btn btn-outline btn-sm" onclick="openLeaveModal()">
+          🏖️ Schedule Leave / Holiday
+        </button>
+      </div>
+
+      <!-- Incoming Requests Snippet -->
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+        <h3 style="font-size:16px; font-weight:700;" id="sec-recent-requests">New Customer Requests & Leads</h3>
+        <button class="btn btn-outline btn-sm" onclick="switchWorkerTab('requests')">View All Leads →</button>
+      </div>
+      <div id="dashboardLeadsSnippet" style="display:flex; flex-direction:column; gap:12px;">
+        <div class="empty-state">No new requests pending. Keep your online status toggle ON to receive leads.</div>
+      </div>
+    </div>
+
+    <!-- TAB 2: REQUESTS & LEADS -->
+    <div id="tab-requests" class="tab-content">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
+        <div>
+          <h2 style="font-size:20px; font-weight:800;" id="sec-incoming-requests">Incoming Booking Requests</h2>
+          <div style="font-size:13px; color:var(--text-muted);" id="sec-req-sub">Customers chose you directly. Accept, reject, or propose custom pricing.</div>
+        </div>
+        <button class="btn btn-outline btn-sm" onclick="loadWorkerLeads()">🔄 Refresh</button>
+      </div>
+
+      <div id="workerLeadsList" style="display:flex; flex-direction:column; gap:16px;">
+        <div class="empty-state">Loading booking requests...</div>
+      </div>
+    </div>
+
+    <!-- TAB 3: MY WORK / ACTIVE JOBS -->
+    <div id="tab-mywork" class="tab-content">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
+        <div>
+          <h2 style="font-size:20px; font-weight:800;" id="sec-my-work">Active Jobs & Execution</h2>
+          <div style="font-size:13px; color:var(--text-muted);" id="sec-work-sub">Track job start OTP, upload completion evidence photos, and confirm settlement</div>
+        </div>
+        <button class="btn btn-outline btn-sm" onclick="loadActiveJobs()">🔄 Refresh</button>
+      </div>
+
+      <div id="activeJobsList" style="display:flex; flex-direction:column; gap:20px;">
+        <div class="empty-state">Loading active work...</div>
+      </div>
+    </div>
+
+    <!-- TAB 4: CHAT -->
+    <div id="tab-chat" class="tab-content">
+      <div class="chat-container">
+        <div class="chat-sidebar" id="workerChatList">
+          <div class="empty-state" style="padding:10px;">Loading conversations...</div>
+        </div>
+        <div class="chat-main">
+          <div class="chat-header">
+            <div>
+              <div style="font-weight:700; font-size:15px;" id="workerChatCustomerName">Select a conversation</div>
+              <div style="font-size:12px; color:var(--text-muted);" id="workerChatMeta">Chat unlocked once customer confirms</div>
+            </div>
+          </div>
+          <div class="chat-messages" id="workerChatMessagesArea">
+            <div class="empty-state" style="margin:auto;"><div>Select an active booking to communicate with client</div></div>
+          </div>
+          <div class="chat-input-bar" id="workerChatInputBar" style="display:none;">
+            <input type="text" id="workerChatMessageInput" placeholder="Type a message to customer..." onkeypress="if(event.key==='Enter') sendWorkerChatMessage()">
+            <button class="btn btn-primary btn-sm" onclick="sendWorkerChatMessage()">Send</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 5: PROFILE & SERVICES -->
+    <div id="tab-profile" class="tab-content">
+      <div style="display:grid; grid-template-columns:300px 1fr; gap:24px;">
+        
+        <!-- Profile Card -->
+        <div class="card" style="text-align:center;">
+          <div style="position:relative; width:90px; height:90px; margin:0 auto 14px;">
+            <img id="workerPhotoImg" src="" alt="Profile" style="width:90px; height:90px; border-radius:var(--radius-full); object-fit:cover; display:none;">
+            <div id="workerPhotoFallback" style="width:90px; height:90px; border-radius:var(--radius-full); background:var(--primary); color:white; display:flex; align-items:center; justify-content:center; font-size:32px; font-weight:bold;">W</div>
+            <label for="workerPhotoFileInput" style="position:absolute; bottom:0; right:0; background:var(--accent); color:white; border-radius:var(--radius-full); width:28px; height:28px; display:flex; align-items:center; justify-content:center; cursor:pointer;" title="Upload Photo">📷</label>
+            <input type="file" id="workerPhotoFileInput" accept="image/png,image/jpeg" style="display:none;" onchange="uploadWorkerPhoto(this.files[0])">
+          </div>
+          <h3 id="workerNameDisplay" style="font-size:18px; font-weight:700;">Worker Name</h3>
+          <div id="workerPhoneDisplay" style="font-size:13px; color:var(--text-muted); margin-bottom:8px;">+91...</div>
+          <div id="workerCityDisplay" style="font-size:13px; color:var(--primary); font-weight:600; margin-bottom:16px;">📍 Ludhiana</div>
+
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <button class="btn btn-primary btn-sm" onclick="openDigilockerModal()">🏛️ DigiLocker Verification</button>
+            <button class="btn btn-outline btn-sm" onclick="openSkillUploadModal()">📜 Upload Trade Certificate</button>
+            <button class="btn btn-outline btn-sm" onclick="openLeaveModal()">🏖️ Leave Calendar</button>
+            <button class="btn btn-outline btn-sm" onclick="openWorkerPasswordModal()">Change Password</button>
+          </div>
+        </div>
+
+        <!-- Management Sections -->
+        <div style="display:flex; flex-direction:column; gap:20px;">
+          
+          <!-- Professional Details -->
+          <div class="card">
+            <h4 style="font-size:16px; font-weight:700; margin-bottom:14px;">Professional Details & Coverage</h4>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+              <div>
+                <label style="font-size:12px; font-weight:600; color:var(--text-muted);">Headline Title</label>
+                <input type="text" id="profTitleInput" class="form-control" placeholder="E.g., Master Electrician & Rewiring">
+              </div>
+              <div>
+                <label style="font-size:12px; font-weight:600; color:var(--text-muted);">Experience (Years)</label>
+                <input type="number" id="profExpInput" class="form-control" min="0" max="60">
+              </div>
+            </div>
+            <div style="margin-bottom:12px;">
+              <label style="font-size:12px; font-weight:600; color:var(--text-muted);">City & Service Radius (km)</label>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                <input type="text" id="profCityInput" class="form-control" placeholder="City name">
+                <input type="number" id="profRadiusInput" class="form-control" min="1" max="150" placeholder="Radius (km)">
+              </div>
+            </div>
+            <div style="margin-bottom:14px;">
+              <label style="font-size:12px; font-weight:600; color:var(--text-muted);">Bio & Description</label>
+              <textarea id="profDescInput" class="form-control" rows="3" placeholder="Tell customers about your skills, quality guarantees..."></textarea>
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="saveWorkerProfileDetails()">Save Professional Profile</button>
+          </div>
+
+          <!-- Independent Pricing & Services -->
+          <div class="card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+              <div>
+                <h4 style="font-size:16px; font-weight:700;">My Services & Independent Rates</h4>
+                <div style="font-size:12px; color:var(--text-muted);">Set your own starting prices. You control your rates with zero platform fees.</div>
+              </div>
+              <button class="btn btn-outline btn-sm" onclick="openAddServiceModal()">+ Offer Service</button>
+            </div>
+            <div id="workerServicesList" style="display:flex; flex-direction:column; gap:10px;">
+              <div class="empty-state" style="padding:16px 0;">No services configured yet.</div>
+            </div>
+          </div>
+
+          <!-- Availability Schedule -->
+          <div class="card">
+            <h4 style="font-size:16px; font-weight:700; margin-bottom:14px;">Working Days & Daily Hours</h4>
+            <div id="workerScheduleTable">
+              <!-- Dynamically populated weekdays table -->
+            </div>
+            <button class="btn btn-primary btn-sm" style="margin-top:14px;" onclick="saveAvailabilitySchedule()">Save Working Hours</button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ==================== MODALS ==================== -->
+
+  <!-- AUTHENTICATION MODAL -->
+  <div class="modal-overlay" id="workerAuthModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 class="modal-title" id="workerAuthTitle">Worker Sign In</h3>
+        <button class="modal-close" onclick="closeModal('workerAuthModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="display:flex; gap:8px; margin-bottom:16px; border-bottom:1px solid var(--border); padding-bottom:8px;">
+          <button class="btn btn-sm btn-outline active" id="tabWorkerLogin" onclick="switchWorkerAuthTab('login')">Sign In</button>
+          <button class="btn btn-sm btn-outline" id="tabWorkerRegister" onclick="switchWorkerAuthTab('register')">Join as Ustaad</button>
+        </div>
+
+        <!-- Quick Demo Fill -->
+        <div style="background:var(--primary-subtle); padding:10px; border-radius:var(--radius-md); margin-bottom:14px; font-size:12px;">
+          <strong style="color:var(--primary);">Demo Provider Logins:</strong>
+          <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:6px;">
+            <button class="btn-sm btn-outline" onclick="fillWorkerDemo('provider1@ustaad.local', 'UstaadDev123!')">Electrician (P1)</button>
+            <button class="btn-sm btn-outline" onclick="fillWorkerDemo('provider2@ustaad.local', 'UstaadDev123!')">Plumber (P2)</button>
+            <button class="btn-sm btn-outline" onclick="fillWorkerDemo('provider3@ustaad.local', 'UstaadDev123!')">Carpenter (P3)</button>
+          </div>
+        </div>
+
+        <!-- Login Form -->
+        <form id="workerLoginForm" onsubmit="handleWorkerLogin(event)">
+          <div style="margin-bottom:12px;">
+            <label style="font-size:13px; font-weight:600;">Email Address</label>
+            <input type="email" id="workerLoginEmail" class="form-control" required placeholder="provider@ustaad.local">
+          </div>
+          <div style="margin-bottom:16px;">
+            <label style="font-size:13px; font-weight:600;">Password</label>
+            <input type="password" id="workerLoginPassword" class="form-control" required placeholder="Password">
+          </div>
+          <button type="submit" class="btn btn-primary" style="width:100%;">Sign In to Worker Portal</button>
+        </form>
+
+        <!-- Register Form -->
+        <form id="workerRegisterForm" style="display:none;" onsubmit="handleWorkerRegister(event)">
+          <div style="margin-bottom:10px;">
+            <label style="font-size:13px; font-weight:600;">Full Name</label>
+            <input type="text" id="wRegName" class="form-control" required placeholder="Worker Name">
+          </div>
+          <div style="margin-bottom:10px;">
+            <label style="font-size:13px; font-weight:600;">Email Address</label>
+            <input type="email" id="wRegEmail" class="form-control" required placeholder="worker@example.com">
+          </div>
+          <div style="margin-bottom:10px;">
+            <label style="font-size:13px; font-weight:600;">Mobile Number (+91...)</label>
+            <input type="tel" id="wRegPhone" class="form-control" required placeholder="+919876543210" pattern="^\+91[6-9]\d{9}$">
+          </div>
+          <div style="margin-bottom:16px;">
+            <label style="font-size:13px; font-weight:600;">Password</label>
+            <input type="password" id="wRegPassword" class="form-control" required minlength="8" placeholder="Secure password">
+          </div>
+          <button type="submit" class="btn btn-primary" style="width:100%;">Create Worker Account</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- DIGILOCKER VERIFICATION MODAL -->
+  <div class="modal-overlay" id="digilockerModal">
+    <div class="modal-box" style="max-width:520px;">
+      <div class="modal-header">
+        <h3 class="modal-title">DigiLocker Identity Verification</h3>
+        <button class="modal-close" onclick="closeModal('digilockerModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="background:#EFF6FF; border:1px solid #BFDBFE; border-radius:var(--radius-md); padding:14px; margin-bottom:16px; font-size:13px;">
+          <strong>Official Government Verification:</strong>
+          <p style="margin-top:4px; color:#1E40AF;">Ustaad uses OAuth 2.0 PKCE to verify your official credentials without ever storing your full 12-digit Aadhaar number.</p>
+        </div>
+
+        <div style="margin-bottom:14px;">
+          <label style="font-size:13px; font-weight:600;">Select Government Identity Document</label>
+          <select id="digiDocType" class="form-control">
+            <option value="AADHAAR">Aadhaar Card (UIDAI e-Aadhaar)</option>
+            <option value="DRIVING_LICENCE">Driving Licence (MoRTH)</option>
+            <option value="PAN">PAN Card (Income Tax)</option>
+            <option value="VOTER_ID">Voter ID (ECI)</option>
+            <option value="ITI">ITI / National Trade Certificate</option>
+          </select>
+        </div>
+
+        <div style="display:flex; align-items:flex-start; gap:8px; margin-bottom:18px;">
+          <input type="checkbox" id="digiConsentCheck" style="margin-top:3px;" required>
+          <label for="digiConsentCheck" style="font-size:12px; color:var(--text-muted); cursor:pointer;">
+            I hereby give consent to Ustaad to verify my identity via DigiLocker for marketplace registration in accordance with IT Act 2000.
+          </label>
+        </div>
+
+        <button class="btn btn-primary" style="width:100%;" id="btnExecDigiLocker" onclick="startDigiLockerFlow()">
+          Connect with DigiLocker →
+        </button>
+
+        <!-- Simulated Callback Block for Development -->
+        <div id="digiCallbackSimBlock" style="display:none; margin-top:16px; border-top:1px dashed var(--border); padding-top:14px;">
+          <div style="font-size:12px; font-weight:700; color:var(--success); margin-bottom:8px;">✓ Authorization Code Received:</div>
+          <button class="btn btn-accent btn-sm" style="width:100%;" onclick="completeDigiLockerCallback()">
+            Confirm Identity Verification Callback
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- REVISED PRICE PROPOSAL MODAL -->
+  <div class="modal-overlay" id="priceProposalModal">
+    <div class="modal-box" style="max-width:440px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Propose Revised Price</h3>
+        <button class="modal-close" onclick="closeModal('priceProposalModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="propBookingId">
+        <div style="font-size:13px; color:var(--text-muted); margin-bottom:14px;">
+          If the customer's problem requires additional work or parts, propose a revised price. The customer must approve it before work begins.
+        </div>
+        <div style="margin-bottom:12px;">
+          <label style="font-size:13px; font-weight:600;">Proposed Price (₹)</label>
+          <input type="number" id="propPriceInput" class="form-control" required min="1">
+        </div>
+        <div style="margin-bottom:16px;">
+          <label style="font-size:13px; font-weight:600;">Reason for Revision (Mandatory)</label>
+          <textarea id="propReasonInput" class="form-control" rows="3" required placeholder="E.g., Wiring replacement required across two rooms..."></textarea>
+        </div>
+        <button class="btn btn-primary" style="width:100%;" onclick="submitPriceProposal()">Submit Price to Customer</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- JOB START OTP VERIFICATION MODAL -->
+  <div class="modal-overlay" id="startOtpModal">
+    <div class="modal-box" style="max-width:440px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Enter Customer Job-Start OTP</h3>
+        <button class="modal-close" onclick="closeModal('startOtpModal')">&times;</button>
+      </div>
+      <div class="modal-body" style="text-align:center;">
+        <input type="hidden" id="otpBookingId">
+        <p style="font-size:13px; color:var(--text-muted); margin-bottom:16px;">
+          Ask the customer for their 6-digit start code generated on their Ustaad app upon your arrival.
+        </p>
+        <input type="text" id="workerOtpInput" class="form-control" maxlength="6" style="text-align:center; font-size:26px; font-weight:800; letter-spacing:6px; width:220px; margin:0 auto 16px;" placeholder="••••••">
+        <button class="btn btn-primary" style="width:100%;" onclick="submitJobStartOtp()">Verify OTP & Begin Work</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SUBMIT JOB COMPLETION MODAL -->
+  <div class="modal-overlay" id="workerCompletionModal">
+    <div class="modal-box" style="max-width:480px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Submit Work for Client Approval</h3>
+        <button class="modal-close" onclick="closeModal('workerCompletionModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="workCompBookingId">
+        <div style="margin-bottom:12px;">
+          <label style="font-size:13px; font-weight:600;">Final Agreed Amount (₹)</label>
+          <input type="number" id="workCompFinalAmount" class="form-control" required min="0">
+        </div>
+        <div style="margin-bottom:16px;">
+          <label style="font-size:13px; font-weight:600;">Completion Notes</label>
+          <textarea id="workCompNotes" class="form-control" rows="3" placeholder="Describe work completed, testing done..."></textarea>
+        </div>
+        <div class="zero-commission-pill" style="width:100%; justify-content:center; padding:8px; margin-bottom:16px;">
+          <span>🛡️</span> Zero Platform Commission. 100% of this amount is settled directly with customer.
+        </div>
+        <button class="btn btn-primary" style="width:100%;" onclick="submitWorkForApproval()">Send to Customer for Signature</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- EVIDENCE PHOTO UPLOAD MODAL -->
+  <div class="modal-overlay" id="evidenceModal">
+    <div class="modal-box" style="max-width:440px;">
+      <div class="modal-header">
+        <h3 class="modal-title" id="evidenceModalTitle">Upload Work Photo</h3>
+        <button class="modal-close" onclick="closeModal('evidenceModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="evidenceBookingId">
+        <input type="hidden" id="evidenceCategory" value="BEFORE_WORK">
+        <div style="margin-bottom:14px;">
+          <label style="font-size:13px; font-weight:600;">Select Photo (PNG or JPEG, max 5MB)</label>
+          <input type="file" id="evidenceFileInput" accept="image/png,image/jpeg" class="form-control">
+        </div>
+        <button class="btn btn-primary" style="width:100%;" onclick="uploadEvidencePhoto()">Upload Evidence</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LEAVE SCHEDULING MODAL -->
+  <div class="modal-overlay" id="leaveModal">
+    <div class="modal-box" style="max-width:480px;">
+      <div class="modal-header">
+        <h3 class="modal-title">Schedule Leave / Holiday</h3>
+        <button class="modal-close" onclick="closeModal('leaveModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="font-size:13px; color:var(--text-muted); margin-bottom:14px;">
+          When on leave, customers searching for appointments during these dates will not see your profile, preventing scheduling conflicts.
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+          <div>
+            <label style="font-size:12px; font-weight:600;">Start Date</label>
+            <input type="datetime-local" id="leaveStartInput" class="form-control" required>
+          </div>
+          <div>
+            <label style="font-size:12px; font-weight:600;">End Date</label>
+            <input type="datetime-local" id="leaveEndInput" class="form-control" required>
+          </div>
+        </div>
+        <div style="margin-bottom:16px;">
+          <label style="font-size:12px; font-weight:600;">Reason (Optional)</label>
+          <input type="text" id="leaveReasonInput" class="form-control" placeholder="E.g., Personal holiday, festival">
+        </div>
+        <button class="btn btn-primary" style="width:100%; margin-bottom:16px;" onclick="submitScheduleLeave()">Add Leave</button>
+
+        <h4 style="font-size:13px; font-weight:700; margin-bottom:8px;">Scheduled Leaves</h4>
+        <div id="scheduledLeavesList" style="display:flex; flex-direction:column; gap:8px;">
+          <div class="empty-state" style="padding:10px;">No scheduled leaves.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="workerToastContainer"></div>
+
+  <!-- ==================== WORKER JAVASCRIPT ==================== -->
+  <script>
+    const API_BASE = 'http://localhost:4000/api/v1';
+    let workerUser = null;
+    let workerTokens = null;
+    let workerSocket = null;
+    let workerCurrentLang = 'en';
+    let workerCurrentTheme = 'light';
+    let workerTextSizeLevel = 0;
+    let activeWorkerChatBookingId = null;
+    let currentDigiRequestId = null;
+    let currentDigiState = null;
+
+    window.addEventListener('DOMContentLoaded', () => {
+      checkSavedWorkerSession();
+      buildScheduleTable();
+
+      window.addEventListener('hashchange', () => {
+        const hash = window.location.hash.replace('#', '') || 'dashboard';
+        switchWorkerTab(hash);
+      });
+    });
+
+    function showWorkerToast(msg, type = 'info') {
+      const c = document.getElementById('workerToastContainer');
+      const t = document.createElement('div');
+      t.className = `toast ${type}`;
+      t.innerHTML = `<span>${type === 'success' ? '✓' : type === 'error' ? '⚠' : 'ℹ'}</span> <span>${msg}</span>`;
+      c.appendChild(t);
+      setTimeout(() => t.remove(), 4000);
+    }
+
+    async function workerApiCall(endpoint, method = 'GET', body = null) {
+      const headers = { 'Content-Type': 'application/json' };
+      if (workerTokens?.accessToken) {
+        headers['Authorization'] = `Bearer ${workerTokens.accessToken}`;
+      }
+
+      const options = { method, headers };
+      if (body && ['POST', 'PUT', 'PATCH'].includes(method)) {
+        options.body = JSON.stringify(body);
+      }
+
+      const res = await fetch(`${API_BASE}${endpoint}`, options);
+      if (res.status === 401 && workerTokens?.refreshToken) {
+        // Refresh token
+        const refreshRes = await fetch(`${API_BASE}/auth/refresh`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refreshToken: workerTokens.refreshToken })
+        });
+        if (refreshRes.ok) {
+          const d = await refreshRes.json();
+          workerTokens = d.tokens;
+          sessionStorage.setItem('ustaad_worker_session', JSON.stringify({ user: workerUser, tokens: workerTokens }));
+          headers['Authorization'] = `Bearer ${workerTokens.accessToken}`;
+          return (await fetch(`${API_BASE}${endpoint}`, options)).json();
+        }
+      }
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.message || `HTTP ${res.status}`);
+      }
+      return data;
+    }
+
+    function checkSavedWorkerSession() {
+      try {
+        const s = sessionStorage.getItem('ustaad_worker_session');
+        if (s) {
+          const p = JSON.parse(s);
+          if (p.tokens && p.user) {
+            workerUser = p.user;
+            workerTokens = p.tokens;
+            onWorkerAuthenticated();
+          }
+        }
+      } catch {}
+    }
+
+    function onWorkerAuthenticated() {
+      const b = document.getElementById('workerAuthBlock');
+      const init = (workerUser.name || 'W').split(' ').map(n=>n[0]).join('').slice(0,2).toUpperCase();
+      b.innerHTML = `
+        <div style="display:flex; align-items:center; gap:8px; cursor:pointer;" onclick="switchWorkerTab('profile')">
+          <div style="width:28px; height:28px; border-radius:50%; background:var(--accent); color:white; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:bold;">${init}</div>
+          <span style="font-size:13px; font-weight:600;">${workerUser.name.split(' ')[0]}</span>
+        </div>
+      `;
+
+      connectWorkerSocket();
+      loadWorkerDashboard();
+    }
+
+    function connectWorkerSocket() {
+      if (!workerTokens?.accessToken || typeof io === 'undefined') return;
+      try {
+        workerSocket = io('http://localhost:4000', {
+          auth: { token: workerTokens.accessToken }
+        });
+        workerSocket.on('chat:message', (m) => handleIncomingWorkerChat(m));
+      } catch (e) {}
+    }
+
+    function switchWorkerTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
+
+      const target = document.getElementById(`tab-${tabId}`);
+      const btn = document.querySelector(`.nav-tab[data-tab="${tabId}"]`);
+      if (target) target.classList.add('active');
+      if (btn) btn.classList.add('active');
+      window.location.hash = tabId;
+
+      if (tabId === 'dashboard') loadWorkerDashboard();
+      if (tabId === 'requests') loadWorkerLeads();
+      if (tabId === 'mywork') loadActiveJobs();
+      if (tabId === 'chat') loadWorkerChatSessions();
+      if (tabId === 'profile') loadWorkerProfileFull();
+    }
+
+    // Worker Online Toggle
+    async function toggleOnlineStatus(isOnline) {
+      document.getElementById('txtOnlineStatus').innerText = isOnline ? 'Online' : 'Offline';
+      if (!workerTokens) return;
+      try {
+        await workerApiCall('/providers/online-status', 'PUT', { isOnline });
+        showWorkerToast(`Availability status: ${isOnline ? 'Online (Accepting Leads)' : 'Offline'}`, 'info');
+      } catch (e) {
+        showWorkerToast(e.message, 'error');
+      }
+    }
+
+    // Dashboard Data
+    async function loadWorkerDashboard() {
+      if (!workerTokens) return;
+      try {
+        const d = await workerApiCall('/providers/dashboard');
+        document.getElementById('kpiTotalEarnings').innerText = `₹${d.totalEarnings}`;
+        document.getElementById('kpiCompletedJobs').innerText = d.completedJobs;
+        document.getElementById('kpiAvgRating').innerText = `${d.averageRating} ★`;
+        document.getElementById('kpiReviewCount').innerText = `${d.reviewCount} customer reviews`;
+        document.getElementById('kpiTrustScore').innerText = d.trustScore;
+        document.getElementById('kpiProfilePercent').innerText = `${d.profileCompletionPercentage}%`;
+        document.getElementById('kpiCompletionRate').innerText = `${d.completionRate}% completion rate`;
+
+        document.getElementById('workerOnlineToggle').checked = d.isOnline;
+        document.getElementById('txtOnlineStatus').innerText = d.isOnline ? 'Online' : 'Offline';
+
+        // DigiLocker status
+        if (d.badges.includes('IDENTITY_VERIFIED')) {
+          document.getElementById('digilockerBadge').innerText = 'Verified';
+          document.getElementById('digilockerBadge').style.background = 'var(--success)';
+          document.getElementById('btnStartDigiLocker').style.display = 'none';
+        }
+
+        loadWorkerLeads();
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    // Leads / Requests
+    async function loadWorkerLeads() {
+      if (!workerTokens) return;
+      const c = document.getElementById('workerLeadsList');
+      c.innerHTML = '<div class="empty-state">Loading booking requests...</div>';
+
+      try {
+        const leads = await workerApiCall('/providers/leads');
+        document.getElementById('leadsBadge').style.display = leads.length ? 'inline-block' : 'none';
+        document.getElementById('leadsBadge').innerText = leads.length;
+
+        if (!leads.length) {
+          c.innerHTML = '<div class="empty-state">No new requests pending. Keep your online status toggle ON to receive leads.</div>';
+          document.getElementById('dashboardLeadsSnippet').innerHTML = c.innerHTML;
+          return;
+        }
+
+        const html = leads.map(l => {
+          const dt = new Date(l.preferredAt).toLocaleString();
+          return `
+            <div class="card" style="display:flex; justify-content:space-between; align-items:center; gap:16px;">
+              <div>
+                <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+                  <span class="badge" style="background:#FEF3C7; color:#92400E;">NEW REQUEST</span>
+                  <strong style="font-size:16px;">${l.service?.name || 'Service Request'}</strong>
+                </div>
+                <div style="font-size:13px; color:var(--text-muted); margin-bottom:6px;">
+                  Customer: <strong>${l.customer?.user?.name || 'Customer'}</strong> (${l.customer?.user?.phone || ''})
+                </div>
+                <div style="font-size:12px; margin-bottom:4px;">📍 ${l.addressText} • ⏰ ${dt}</div>
+                <div style="font-size:12px; color:var(--text-light);">"${l.problemDescription}"</div>
+              </div>
+
+              <div style="display:flex; flex-direction:column; gap:6px; min-width:160px;">
+                <button class="btn btn-primary btn-sm" onclick="respondLead('${l.id}', 'ACCEPTED')">Accept Job</button>
+                <button class="btn btn-accent btn-sm" onclick="openPriceProposalModal('${l.id}', '${l.estimatedPrice || 0}')">Revise Price</button>
+                <button class="btn btn-outline btn-sm" style="color:var(--danger);" onclick="respondLead('${l.id}', 'REJECTED')">Decline</button>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        c.innerHTML = html;
+        document.getElementById('dashboardLeadsSnippet').innerHTML = html;
+      } catch (err) {
+        c.innerHTML = `<div class="empty-state" style="color:var(--danger);">${err.message}</div>`;
+      }
+    }
+
+    async function respondLead(id, status) {
+      try {
+        await workerApiCall(`/bookings/${id}/transition`, 'POST', { status });
+        showWorkerToast(`Booking ${status.toLowerCase()}`, 'success');
+        loadWorkerLeads();
+        loadActiveJobs();
+      } catch (e) {
+        showWorkerToast(e.message, 'error');
+      }
+    }
+
+    function openPriceProposalModal(id, currentPrice) {
+      document.getElementById('propBookingId').value = id;
+      document.getElementById('propPriceInput').value = currentPrice || '';
+      document.getElementById('propReasonInput').value = '';
+      openModal('priceProposalModal');
+    }
+
+    async function submitPriceProposal() {
+      const id = document.getElementById('propBookingId').value;
+      const price = parseFloat(document.getElementById('propPriceInput').value);
+      const reason = document.getElementById('propReasonInput').value.trim();
+
+      if (!price || !reason) {
+        showWorkerToast('Please provide a revised price and reason.', 'error');
+        return;
+      }
+
+      try {
+        await workerApiCall(`/bookings/${id}/propose-price`, 'POST', {
+          revisedPrice: price,
+          reason
+        });
+        closeModal('priceProposalModal');
+        showWorkerToast('Revised price proposed to customer for approval.', 'success');
+        loadWorkerLeads();
+      } catch (e) {
+        showWorkerToast(e.message, 'error');
+      }
+    }
+
+    // Active Jobs Execution
+    async function loadActiveJobs() {
+      if (!workerTokens) return;
+      const c = document.getElementById('activeJobsList');
+      c.innerHTML = '<div class="empty-state">Loading active work...</div>';
+
+      try {
+        const bookings = await workerApiCall('/bookings');
+        const active = bookings.filter(b => 
+          !['PENDING', 'CANCELLED_BY_CUSTOMER', 'CANCELLED_BY_PROVIDER', 'REJECTED'].includes(b.status)
+        );
+
+        document.getElementById('activeJobsBadge').style.display = active.length ? 'inline-block' : 'none';
+        document.getElementById('activeJobsBadge').innerText = active.length;
+
+        if (!active.length) {
+          c.innerHTML = '<div class="empty-state">No ongoing or completed jobs.</div>';
+          return;
+        }
+
+        c.innerHTML = active.map(b => {
+          let stepIdx = 0;
+          if (b.status === 'CONFIRMED') stepIdx = 1;
+          if (b.status === 'PROVIDER_ON_THE_WAY') stepIdx = 2;
+          if (b.status === 'IN_PROGRESS') stepIdx = 3;
+          if (b.status === 'AWAITING_CUSTOMER_CONFIRMATION') stepIdx = 4;
+          if (b.status === 'COMPLETED' || b.status === 'REVIEWED') stepIdx = 5;
+
+          let actions = '';
+          if (b.status === 'CONFIRMED') {
+            actions = `<button class="btn btn-primary btn-sm" onclick="respondLead('${b.id}', 'PROVIDER_ON_THE_WAY')">🚗 I Am On The Way</button>`;
+          } else if (b.status === 'PROVIDER_ON_THE_WAY') {
+            actions = `<button class="btn btn-accent btn-sm" onclick="openStartOtpModal('${b.id}')">🔑 Enter Customer Start OTP</button>`;
+          } else if (b.status === 'IN_PROGRESS') {
+            actions = `
+              <div style="display:flex; gap:8px;">
+                <button class="btn btn-outline btn-sm" onclick="openEvidenceModal('${b.id}', 'BEFORE_WORK')">📷 Upload Before Photo</button>
+                <button class="btn btn-outline btn-sm" onclick="openEvidenceModal('${b.id}', 'AFTER_WORK')">📷 Upload After Photo</button>
+                <button class="btn btn-primary btn-sm" onclick="openWorkerCompletionModal('${b.id}', '${b.finalAmount || b.estimatedPrice || 0}')">✓ Submit Completion</button>
+              </div>
+            `;
+          } else if (b.status === 'AWAITING_CUSTOMER_CONFIRMATION') {
+            actions = `<div style="font-size:12px; color:var(--accent); font-weight:700;">Awaiting client signature & approval...</div>`;
+          } else if (b.status === 'COMPLETED' || b.status === 'REVIEWED') {
+            actions = `
+              <button class="btn btn-primary btn-sm" onclick="confirmPaymentReceipt('${b.id}')">💰 Confirm Payment Receipt</button>
+            `;
+          }
+
+          return `
+            <div class="card">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                <div>
+                  <strong style="font-size:16px;">${b.service?.name}</strong>
+                  <div style="font-size:12px; color:var(--text-muted);">Client: ${b.customer?.user?.name} (${b.customer?.user?.phone})</div>
+                </div>
+                <span class="badge" style="background:#E8F3EE; color:var(--primary); font-size:12px;">${b.status}</span>
+              </div>
+
+              <!-- Stepper -->
+              <div class="stepper">
+                <div class="step-node ${stepIdx >= 1 ? (stepIdx > 1 ? 'done' : 'active') : ''}">
+                  <div class="step-circle">${stepIdx > 1 ? '✓' : '1'}</div>
+                  <div>Confirmed</div>
+                </div>
+                <div class="step-node ${stepIdx >= 2 ? (stepIdx > 2 ? 'done' : 'active') : ''}">
+                  <div class="step-circle">${stepIdx > 2 ? '✓' : '2'}</div>
+                  <div>On Way</div>
+                </div>
+                <div class="step-node ${stepIdx >= 3 ? (stepIdx > 3 ? 'done' : 'active') : ''}">
+                  <div class="step-circle">${stepIdx > 3 ? '✓' : '3'}</div>
+                  <div>Work Started</div>
+                </div>
+                <div class="step-node ${stepIdx >= 4 ? (stepIdx > 4 ? 'done' : 'active') : ''}">
+                  <div class="step-circle">${stepIdx > 4 ? '✓' : '4'}</div>
+                  <div>Approval</div>
+                </div>
+                <div class="step-node ${stepIdx >= 5 ? 'done' : ''}">
+                  <div class="step-circle">${stepIdx >= 5 ? '✓' : '5'}</div>
+                  <div>Settled</div>
+                </div>
+              </div>
+
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-top:14px; border-top:1px solid var(--border-subtle); padding-top:12px;">
+                <div>Agreed Settlement: <strong>₹${b.finalAmount || b.estimatedPrice || 0}</strong> (Zero Platform Fee)</div>
+                <div>${actions}</div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      } catch (err) {
+        c.innerHTML = `<div class="empty-state" style="color:var(--danger);">${err.message}</div>`;
+      }
+    }
+
+    // OTP Verification
+    function openStartOtpModal(id) {
+      document.getElementById('otpBookingId').value = id;
+      document.getElementById('workerOtpInput').value = '';
+      openModal('startOtpModal');
+    }
+
+    async function submitJobStartOtp() {
+      const id = document.getElementById('otpBookingId').value;
+      const otp = document.getElementById('workerOtpInput').value.trim();
+      if (otp.length !== 6) {
+        showWorkerToast('Enter the 6-digit OTP provided by the customer', 'error');
+        return;
+      }
+
+      try {
+        await workerApiCall(`/bookings/${id}/transition`, 'POST', {
+          status: 'IN_PROGRESS',
+          otp
+        });
+        closeModal('startOtpModal');
+        showWorkerToast('OTP verified! Job is now marked IN PROGRESS.', 'success');
+        loadActiveJobs();
+      } catch (e) {
+        showWorkerToast(`OTP verification failed: ${e.message}`, 'error');
+      }
+    }
+
+    // Evidence Photo Upload
+    function openEvidenceModal(bookingId, cat) {
+      document.getElementById('evidenceBookingId').value = bookingId;
+      document.getElementById('evidenceCategory').value = cat;
+      document.getElementById('evidenceModalTitle').innerText = cat === 'BEFORE_WORK' ? 'Upload Before-Work Photo' : 'Upload After-Work Photo';
+      openModal('evidenceModal');
+    }
+
+    async function uploadEvidencePhoto() {
+      const id = document.getElementById('evidenceBookingId').value;
+      const cat = document.getElementById('evidenceCategory').value;
+      const file = document.getElementById('evidenceFileInput').files[0];
+      if (!file) { showWorkerToast('Select an image file', 'error'); return; }
+
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const base64 = reader.result.split(',')[1];
+        try {
+          await workerApiCall(`/bookings/${id}/evidence`, 'POST', {
+            category: cat,
+            mimeType: file.type,
+            contentBase64: base64
+          });
+          closeModal('evidenceModal');
+          showWorkerToast(`${cat} photo uploaded successfully!`, 'success');
+        } catch (e) {
+          showWorkerToast(e.message, 'error');
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // Submit Completion
+    function openWorkerCompletionModal(id, currentAmount) {
+      document.getElementById('workCompBookingId').value = id;
+      document.getElementById('workCompFinalAmount').value = currentAmount || '';
+      openModal('workerCompletionModal');
+    }
+
+    async function submitWorkForApproval() {
+      const id = document.getElementById('workCompBookingId').value;
+      const finalAmount = parseFloat(document.getElementById('workCompFinalAmount').value);
+      const notes = document.getElementById('workCompNotes').value.trim();
+
+      if (!finalAmount || finalAmount <= 0) {
+        showWorkerToast('Please enter the final amount.', 'error');
+        return;
+      }
+
+      try {
+        await workerApiCall(`/bookings/${id}/transition`, 'POST', {
+          status: 'AWAITING_CUSTOMER_CONFIRMATION',
+          finalAmount,
+          completionNote: notes || 'Work completed. Awaiting client signature.'
+        });
+        closeModal('workerCompletionModal');
+        showWorkerToast('Work submitted! Awaiting customer digital signature.', 'success');
+        loadActiveJobs();
+      } catch (e) {
+        showWorkerToast(e.message, 'error');
+      }
+    }
+
+    // Confirm Payment Receipt
+    async function confirmPaymentReceipt(bookingId) {
+      if (confirm('Did you receive the full direct payment from the customer (Cash / UPI)? This will settle the booking.')) {
+        try {
+          await workerApiCall(`/bookings/${bookingId}/payment/confirm`, 'POST');
+          showWorkerToast('Payment confirmed and settled! 0% platform fee deducted.', 'success');
+          loadActiveJobs();
+          loadWorkerDashboard();
+        } catch (e) {
+          showWorkerToast(e.message, 'error');
+        }
+      }
+    }
+
+    // DigiLocker PKCE Integration
+    async function startDigiLockerFlow() {
+      const docType = document.getElementById('digiDocType').value;
+      const consent = document.getElementById('digiConsentCheck').checked;
+      if (!consent) {
+        showWorkerToast('You must give consent to proceed with verification.', 'error');
+        return;
+      }
+
+      try {
+        const res = await workerApiCall('/verification/digilocker/start', 'POST', {
+          documentType: docType,
+          consent: true
+        });
+
+        currentDigiRequestId = res.requestId;
+        currentDigiState = res.state;
+
+        document.getElementById('digiCallbackSimBlock').style.display = 'block';
+        showWorkerToast('DigiLocker authorization challenge created!', 'info');
+      } catch (e) {
+        showWorkerToast(e.message, 'error');
+      }
+    }
+
+    async function completeDigiLockerCallback() {
+      try {
+        const res = await workerApiCall('/verification/digilocker/callback', 'POST', {
+          requestId: currentDigiRequestId,
+          state: currentDigiState,
+          code: 'mock-authorization-code-12345'
+        });
+
+        closeModal('digilockerModal');
+        showWorkerToast('DigiLocker identity verified successfully!', 'success');
+        loadWorkerDashboard();
+      } catch (e) {
+        showWorkerToast(`Verification failed: ${e.message}`, 'error');
+      }
+    }
+
+    // Leave Scheduling
+    function openLeaveModal() {
+      openModal('leaveModal');
+      loadWorkerLeaves();
+    }
+
+    async function loadWorkerLeaves() {
+      const c = document.getElementById('scheduledLeavesList');
+      try {
+        const leaves = await workerApiCall('/providers/leaves');
+        if (!leaves.length) {
+          c.innerHTML = '<div class="empty-state" style="padding:8px;">No scheduled leaves.</div>';
+          return;
+        }
+        c.innerHTML = leaves.map(l => `
+          <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg); padding:8px 12px; border-radius:6px; font-size:12px;">
+            <div>
+              <strong>${new Date(l.startDate).toLocaleDateString()}</strong> to <strong>${new Date(l.endDate).toLocaleDateString()}</strong>
+              <div style="color:var(--text-muted);">${l.reason || 'Leave'}</div>
+            </div>
+            <button class="btn-sm btn-outline" style="color:var(--danger);" onclick="deleteWorkerLeave('${l.id}')">Cancel</button>
+          </div>
+        `).join('');
+      } catch (e) {}
+    }
+
+    async function submitScheduleLeave() {
+      const s = document.getElementById('leaveStartInput').value;
+      const e = document.getElementById('leaveEndInput').value;
+      const r = document.getElementById('leaveReasonInput').value.trim();
+
+      if (!s || !e) { showWorkerToast('Select start and end dates', 'error'); return; }
+
+      try {
+        await workerApiCall('/providers/leaves', 'POST', {
+          startDate: new Date(s).toISOString(),
+          endDate: new Date(e).toISOString(),
+          reason: r || undefined
+        });
+        showWorkerToast('Leave scheduled! Bookings during this window will be prevented.', 'success');
+        loadWorkerLeaves();
+      } catch (err) {
+        showWorkerToast(err.message, 'error');
+      }
+    }
+
+    async function deleteWorkerLeave(id) {
+      try {
+        await workerApiCall(`/providers/leaves/${id}`, 'DELETE');
+        showWorkerToast('Leave removed', 'info');
+        loadWorkerLeaves();
+      } catch (err) { showWorkerToast(err.message, 'error'); }
+    }
+
+    // Weekly Working Hours Table
+    const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    function buildScheduleTable() {
+      const c = document.getElementById('workerScheduleTable');
+      c.innerHTML = DAYS.map((day, idx) => `
+        <div style="display:grid; grid-template-columns:120px 1fr 1fr 80px; gap:10px; align-items:center; margin-bottom:8px; font-size:13px;">
+          <strong>${day}</strong>
+          <input type="time" id="schedStart_${idx}" value="09:00" class="form-control" style="padding:6px;">
+          <input type="time" id="schedEnd_${idx}" value="18:00" class="form-control" style="padding:6px;">
+          <label style="display:flex; align-items:center; gap:4px; font-size:12px; cursor:pointer;">
+            <input type="checkbox" id="schedEn_${idx}" checked> On
+          </label>
+        </div>
+      `).join('');
+    }
+
+    async function saveAvailabilitySchedule() {
+      const payload = [];
+      for (let i = 0; i < 7; i++) {
+        const en = document.getElementById(`schedEn_${i}`).checked;
+        const st = document.getElementById(`schedStart_${i}`).value;
+        const et = document.getElementById(`schedEnd_${i}`).value;
+        if (en) {
+          payload.push({ weekday: i, startTime: st, endTime: et, enabled: true });
+        }
+      }
+
+      try {
+        await workerApiCall('/account/availability', 'PUT', payload);
+        showWorkerToast('Working hours updated!', 'success');
+      } catch (e) {
+        showWorkerToast(e.message, 'error');
+      }
+    }
+
+    // Profile Details
+    async function loadWorkerProfileFull() {
+      if (!workerTokens) { openWorkerAuthModal('login'); return; }
+      try {
+        const p = await workerApiCall('/providers/me');
+        document.getElementById('workerNameDisplay').innerText = p.user?.name || 'Worker';
+        document.getElementById('workerPhoneDisplay').innerText = p.user?.phone || '';
+        document.getElementById('profTitleInput').value = p.title || '';
+        document.getElementById('profExpInput').value = p.experienceYears || 0;
+        document.getElementById('profCityInput').value = p.city || '';
+        document.getElementById('profRadiusInput').value = p.serviceRadiusKm || 15;
+        document.getElementById('profDescInput').value = p.description || '';
+
+        loadWorkerServicesList();
+      } catch (e) {}
+    }
+
+    async function saveWorkerProfileDetails() {
+      const title = document.getElementById('profTitleInput').value.trim();
+      const exp = parseInt(document.getElementById('profExpInput').value) || 0;
+      const city = document.getElementById('profCityInput').value.trim();
+      const radius = parseFloat(document.getElementById('profRadiusInput').value) || 15;
+      const desc = document.getElementById('profDescInput').value.trim();
+
+      try {
+        await workerApiCall('/providers/me', 'PUT', {
+          title,
+          description: desc,
+          experienceYears: exp,
+          languages: ['English', 'Hindi', 'Punjabi'],
+          city,
+          latitude: 30.9,
+          longitude: 75.85,
+          serviceRadiusKm: radius
+        });
+        showWorkerToast('Professional profile saved!', 'success');
+      } catch (e) {
+        showWorkerToast(e.message, 'error');
+      }
+    }
+
+    // Services & Pricing Management
+    async function loadWorkerServicesList() {
+      try {
+        const p = await workerApiCall('/providers/me');
+        const c = document.getElementById('workerServicesList');
+        if (!p.services || !p.services.length) {
+          c.innerHTML = '<div class="empty-state" style="padding:12px;">No services active. Click "+ Offer Service" to add trades.</div>';
+          return;
+        }
+
+        c.innerHTML = p.services.map(s => `
+          <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg); padding:10px 14px; border-radius:var(--radius-md);">
+            <div>
+              <strong>${s.service?.name}</strong>
+              <div style="font-size:12px; color:var(--text-muted);">${s.description || 'Standard trade service'}</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px;">
+              <span style="font-weight:800; color:var(--primary); font-size:16px;">₹${s.startingPrice}</span>
+              <button class="btn-sm btn-outline" onclick="editServicePrice('${s.serviceId}', ${s.startingPrice})">Edit Rate</button>
+            </div>
+          </div>
+        `).join('');
+      } catch (e) {}
+    }
+
+    async function editServicePrice(serviceId, current) {
+      const newRate = prompt('Enter your custom starting price (₹):', current);
+      if (newRate === null) return;
+      const parsed = parseFloat(newRate);
+      if (isNaN(parsed) || parsed < 0) {
+        alert('Invalid rate');
+        return;
+      }
+
+      try {
+        await workerApiCall(`/account/services/${serviceId}`, 'PUT', {
+          startingPrice: parsed,
+          active: true
+        });
+        showWorkerToast('Service rate updated!', 'success');
+        loadWorkerServicesList();
+      } catch (e) { showWorkerToast(e.message, 'error'); }
+    }
+
+    // Auth Submission
+    function openWorkerAuthModal(mode) {
+      switchWorkerAuthTab(mode);
+      openModal('workerAuthModal');
+    }
+
+    function switchWorkerAuthTab(mode) {
+      document.getElementById('workerLoginForm').style.display = mode === 'login' ? 'block' : 'none';
+      document.getElementById('workerRegisterForm').style.display = mode === 'register' ? 'block' : 'none';
+      document.getElementById('tabWorkerLogin').classList.toggle('active', mode === 'login');
+      document.getElementById('tabWorkerRegister').classList.toggle('active', mode === 'register');
+    }
+
+    function fillWorkerDemo(email, pass) {
+      document.getElementById('workerLoginEmail').value = email;
+      document.getElementById('workerLoginPassword').value = pass;
+    }
+
+    async function handleWorkerLogin(e) {
+      e.preventDefault();
+      const email = document.getElementById('workerLoginEmail').value.trim();
+      const password = document.getElementById('workerLoginPassword').value;
+
+      try {
+        const data = await workerApiCall('/auth/login', 'POST', { email, password });
+        if (data.user.role !== 'PROVIDER') {
+          showWorkerToast('This account is registered as a Customer. Please use customer.html', 'error');
+          return;
+        }
+        workerUser = data.user;
+        workerTokens = data.tokens;
+        sessionStorage.setItem('ustaad_worker_session', JSON.stringify({ user: workerUser, tokens: workerTokens }));
+        closeModal('workerAuthModal');
+        onWorkerAuthenticated();
+        showWorkerToast(`Welcome, Ustaad ${workerUser.name}!`, 'success');
+        switchWorkerTab('dashboard');
+      } catch (err) {
+        showWorkerToast(err.message, 'error');
+      }
+    }
+
+    function openModal(id) { document.getElementById(id).classList.add('active'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+  </script>
+</body>
+</html>

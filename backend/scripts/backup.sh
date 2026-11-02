@@ -53,3 +53,4 @@ echo "[Ustaad Backup] Backup completed successfully: ${TARGET_FILE} (${FILE_SIZE
 echo "[Ustaad Backup] Pruning backups older than ${RETENTION_DAYS} days..."
 find "${BACKUP_DIR}" -name "ustaad_db_*.sql.gz" -type f -mtime +"${RETENTION_DAYS}" -exec rm -f {} +
 echo "[Ustaad Backup] Done."
+
